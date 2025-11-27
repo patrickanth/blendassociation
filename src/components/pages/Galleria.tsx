@@ -271,14 +271,14 @@ const FilterButton = styled.button<{ active: boolean }>`
   }
 `;
 
-const ImageModal = styled.div<{ isOpen: boolean }>`
+const ImageModal = styled.div<{ $isOpen: boolean }>`
   position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
   height: 100vh;
   background: rgba(0, 0, 0, 0.97);
-  display: ${props => props.isOpen ? 'flex' : 'none'};
+  display: ${props => props.$isOpen ? 'flex' : 'none'};
   justify-content: center;
   align-items: center;
   z-index: 10000;
@@ -459,6 +459,7 @@ const Galleria: React.FC = () => {
   const [galleriaItems, setGalleriaItems] = useState<GalleriaItem[]>([]);
   const [selectedCategory, setSelectedCategory] = useState('tutti');
   const [isLoading, setIsLoading] = useState(true);
+  const [hasLoaded, setHasLoaded] = useState(false);
   const [selectedItem, setSelectedItem] = useState<GalleriaItem | null>(null);
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
 
@@ -468,16 +469,23 @@ const Galleria: React.FC = () => {
 
   const loadGalleria = async () => {
     try {
-      setIsLoading(true);
-      const galleriaData = await galleriaService.getGalleriaPubblica();
+      // Quick timeout - if no response in 3 seconds, show empty state
+      const timeoutPromise = new Promise<GalleriaItem[]>((resolve) => {
+        setTimeout(() => resolve([]), 3000);
+      });
+
+      const galleriaPromise = galleriaService.getGalleriaPubblica();
+      const galleriaData = await Promise.race([galleriaPromise, timeoutPromise]);
       const sortedGalleria = galleriaData.sort(
         (a: GalleriaItem, b: GalleriaItem) => b.data.getTime() - a.data.getTime()
       );
       setGalleriaItems(sortedGalleria);
     } catch (error) {
       console.error('Errore nel caricamento della galleria:', error);
+      setGalleriaItems([]);
     } finally {
       setIsLoading(false);
+      setHasLoaded(true);
     }
   };
 
@@ -535,10 +543,11 @@ const Galleria: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [selectedItem]);
 
-  if (isLoading) {
+  // Show loading only briefly, then show content
+  if (isLoading && !hasLoaded) {
     return (
       <PageContainer>
-        <LoadingSpinner fullscreen text="Loading archive..." />
+        <LoadingSpinner fullscreen text="BLEND" />
       </PageContainer>
     );
   }
@@ -610,7 +619,7 @@ const Galleria: React.FC = () => {
         )}
       </MainContent>
 
-      <ImageModal isOpen={!!selectedItem} onClick={closeImageModal}>
+      <ImageModal $isOpen={!!selectedItem} onClick={closeImageModal}>
         <CloseButton onClick={(e) => {
           e.stopPropagation();
           closeImageModal();

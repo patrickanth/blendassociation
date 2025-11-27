@@ -13,7 +13,7 @@ const fadeIn = keyframes`
   }
 `;
 
-const HeaderContainer = styled.header<{ scrolled: boolean }>`
+const HeaderContainer = styled.header<{ $scrolled: boolean }>`
   position: fixed;
   top: 0;
   left: 0;
@@ -25,11 +25,11 @@ const HeaderContainer = styled.header<{ scrolled: boolean }>`
   padding: 0 5%;
   z-index: 1000;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  background: ${props => props.scrolled
+  background: ${props => props.$scrolled
     ? 'rgba(0, 0, 0, 0.95)'
     : 'transparent'};
-  backdrop-filter: ${props => props.scrolled ? 'blur(20px)' : 'none'};
-  border-bottom: 1px solid ${props => props.scrolled
+  backdrop-filter: ${props => props.$scrolled ? 'blur(20px)' : 'none'};
+  border-bottom: 1px solid ${props => props.$scrolled
     ? 'rgba(135, 206, 235, 0.08)'
     : 'transparent'};
   animation: ${fadeIn} 0.6s ease;
@@ -94,11 +94,11 @@ const Nav = styled.nav`
   }
 `;
 
-const NavLink = styled(Link)<{ active: boolean }>`
-  color: ${props => props.active ? '#87ceeb' : 'rgba(255, 255, 255, 0.5)'};
+const NavLink = styled(Link)<{ $active: boolean }>`
+  color: ${props => props.$active ? '#87ceeb' : 'rgba(255, 255, 255, 0.5)'};
   text-decoration: none;
   font-size: 11px;
-  font-weight: ${props => props.active ? '500' : '400'};
+  font-weight: ${props => props.$active ? '500' : '400'};
   letter-spacing: 2px;
   text-transform: uppercase;
   transition: all 0.3s ease;
@@ -110,7 +110,7 @@ const NavLink = styled(Link)<{ active: boolean }>`
     position: absolute;
     bottom: 0;
     left: 0;
-    width: ${props => props.active ? '100%' : '0'};
+    width: ${props => props.$active ? '100%' : '0'};
     height: 1px;
     background: #87ceeb;
     transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -135,7 +135,7 @@ const NavLink = styled(Link)<{ active: boolean }>`
 `;
 
 const AdminLink = styled(NavLink)`
-  color: rgba(255, 255, 255, 0.25);
+  color: ${props => props.$active ? 'rgba(135, 206, 235, 0.6)' : 'rgba(255, 255, 255, 0.25)'};
 
   &:hover {
     color: rgba(135, 206, 235, 0.6);
@@ -177,7 +177,7 @@ const Header: React.FC<HeaderProps> = ({ showLogo = true }) => {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <HeaderContainer scrolled={scrolled}>
+    <HeaderContainer $scrolled={scrolled}>
       {showLogo && (
         <LogoContainer to="/">
           <LogoText>Blend</LogoText>
@@ -186,20 +186,20 @@ const Header: React.FC<HeaderProps> = ({ showLogo = true }) => {
       )}
 
       <Nav>
-        <NavLink to="/" active={isActive('/')}>
+        <NavLink to="/" $active={isActive('/')}>
           Home
         </NavLink>
-        <NavLink to="/eventi" active={isActive('/eventi')}>
+        <NavLink to="/eventi" $active={isActive('/eventi')}>
           Eventi
         </NavLink>
-        <NavLink to="/galleria" active={isActive('/galleria')}>
+        <NavLink to="/galleria" $active={isActive('/galleria')}>
           Galleria
         </NavLink>
-        <NavLink to="/chi-siamo" active={isActive('/chi-siamo')}>
+        <NavLink to="/chi-siamo" $active={isActive('/chi-siamo')}>
           Chi Siamo
         </NavLink>
         <Separator />
-        <AdminLink to="/admin/login" active={isActive('/admin/login') || location.pathname.startsWith('/admin')}>
+        <AdminLink to="/admin/login" $active={isActive('/admin/login') || location.pathname.startsWith('/admin')}>
           Admin
         </AdminLink>
       </Nav>

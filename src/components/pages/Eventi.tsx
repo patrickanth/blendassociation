@@ -382,6 +382,7 @@ const Eventi: React.FC = () => {
   const [eventi, setEventi] = useState<Evento[]>([]);
   const [selectedCategory, setSelectedCategory] = useState('tutti');
   const [isLoading, setIsLoading] = useState(true);
+  const [hasLoaded, setHasLoaded] = useState(false);
 
   useEffect(() => {
     loadEventi();
@@ -389,13 +390,20 @@ const Eventi: React.FC = () => {
 
   const loadEventi = async () => {
     try {
-      setIsLoading(true);
-      const eventiData = await eventiService.getEventiPubblici();
+      // Quick timeout - if no response in 3 seconds, show empty state
+      const timeoutPromise = new Promise<Evento[]>((resolve) => {
+        setTimeout(() => resolve([]), 3000);
+      });
+
+      const eventiPromise = eventiService.getEventiPubblici();
+      const eventiData = await Promise.race([eventiPromise, timeoutPromise]);
       setEventi(eventiData);
     } catch (error) {
       console.error('Errore nel caricamento degli eventi:', error);
+      setEventi([]);
     } finally {
       setIsLoading(false);
+      setHasLoaded(true);
     }
   };
 
@@ -423,10 +431,11 @@ const Eventi: React.FC = () => {
     return `${lineup.slice(0, 3).join(' • ')} +${lineup.length - 3}`;
   };
 
-  if (isLoading) {
+  // Show loading only for first 1 second max, then show content
+  if (isLoading && !hasLoaded) {
     return (
       <PageContainer>
-        <LoadingSpinner fullscreen text="Loading events..." />
+        <LoadingSpinner fullscreen text="BLEND" />
       </PageContainer>
     );
   }

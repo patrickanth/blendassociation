@@ -4,7 +4,7 @@ import styled, { keyframes, css } from 'styled-components';
 import blendLogo from '../assets/logowbig.png';
 
 // ============================================================================
-// KEYFRAMES - Animazioni
+// KEYFRAMES
 // ============================================================================
 
 const fadeIn = keyframes`
@@ -47,15 +47,9 @@ const textReveal = keyframes`
     opacity: 1;
     filter: blur(0);
   }
-  70% {
-    transform: translateY(-2px) skewX(2deg);
-  }
-  85% {
-    transform: translateY(1px) skewX(-1deg);
-  }
   100% {
     opacity: 1;
-    transform: translateY(0) skewX(0);
+    transform: translateY(0);
     filter: blur(0);
   }
 `;
@@ -63,32 +57,52 @@ const textReveal = keyframes`
 const pulseGlow = keyframes`
   0%, 100% {
     box-shadow: 0 0 5px rgba(135, 206, 235, 0.3),
-                0 0 10px rgba(135, 206, 235, 0.2),
-                0 0 20px rgba(70, 130, 180, 0.1);
+                0 0 10px rgba(135, 206, 235, 0.2);
   }
   50% {
     box-shadow: 0 0 10px rgba(135, 206, 235, 0.5),
-                0 0 20px rgba(135, 206, 235, 0.3),
-                0 0 40px rgba(70, 130, 180, 0.2);
+                0 0 20px rgba(135, 206, 235, 0.3);
   }
 `;
 
 const igniteGlow = keyframes`
-  0% {
-    opacity: 0.3;
-    box-shadow: 0 0 2px rgba(135, 206, 235, 0.2);
+  0% { opacity: 0.3; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+`;
+
+const planetOrbit = keyframes`
+  0% { transform: rotate(0deg) translateX(var(--orbit-radius)) rotate(0deg); }
+  100% { transform: rotate(360deg) translateX(var(--orbit-radius)) rotate(-360deg); }
+`;
+
+const lineGlow = keyframes`
+  0%, 100% { opacity: 0.1; }
+  50% { opacity: 0.3; }
+`;
+
+const floatText = keyframes`
+  0%, 100% {
+    transform: translateY(0) translateX(0);
+    opacity: 0.06;
+  }
+  25% {
+    transform: translateY(-10px) translateX(5px);
+    opacity: 0.1;
   }
   50% {
-    opacity: 1;
-    box-shadow: 0 0 8px rgba(135, 206, 235, 0.8),
-                0 0 16px rgba(135, 206, 235, 0.5),
-                0 0 24px rgba(70, 130, 180, 0.3);
+    transform: translateY(-5px) translateX(-5px);
+    opacity: 0.08;
   }
-  100% {
-    opacity: 0.6;
-    box-shadow: 0 0 4px rgba(135, 206, 235, 0.5),
-                0 0 8px rgba(135, 206, 235, 0.3);
+  75% {
+    transform: translateY(-15px) translateX(3px);
+    opacity: 0.12;
   }
+`;
+
+const scanlineMove = keyframes`
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100vh); }
 `;
 
 // ============================================================================
@@ -105,20 +119,210 @@ const PageContainer = styled.div`
   position: relative;
 `;
 
+// Scanline effect
+const Scanline = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(135, 206, 235, 0.2), transparent);
+  animation: ${scanlineMove} 6s linear infinite;
+  pointer-events: none;
+  z-index: 100;
+`;
+
+// Particle field
 const ParticleField = styled.div`
   position: absolute;
   inset: 0;
   z-index: 1;
-  opacity: 0.4;
+  opacity: 0.5;
   background-image:
     radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,0.8), transparent),
     radial-gradient(1px 1px at 40% 70%, rgba(255,255,255,0.6), transparent),
     radial-gradient(1px 1px at 60% 20%, rgba(255,255,255,0.7), transparent),
     radial-gradient(1.5px 1.5px at 80% 50%, rgba(255,255,255,0.5), transparent),
     radial-gradient(1px 1px at 10% 80%, rgba(255,255,255,0.6), transparent),
-    radial-gradient(1.5px 1.5px at 90% 10%, rgba(255,255,255,0.4), transparent);
+    radial-gradient(1.5px 1.5px at 90% 10%, rgba(255,255,255,0.4), transparent),
+    radial-gradient(1px 1px at 50% 50%, rgba(135,206,235,0.3), transparent),
+    radial-gradient(1px 1px at 70% 80%, rgba(135,206,235,0.2), transparent);
   background-size: 250px 250px;
   animation: ${fadeIn} 2s ease-out;
+`;
+
+// Elegant grid lines
+const GridLines = styled.div`
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg,
+      transparent 0%,
+      rgba(135, 206, 235, 0.1) 20%,
+      rgba(135, 206, 235, 0.2) 50%,
+      rgba(135, 206, 235, 0.1) 80%,
+      transparent 100%
+    );
+    animation: ${lineGlow} 4s ease-in-out infinite;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 1px;
+    height: 100%;
+    background: linear-gradient(180deg,
+      transparent 0%,
+      rgba(135, 206, 235, 0.1) 30%,
+      rgba(135, 206, 235, 0.15) 50%,
+      rgba(135, 206, 235, 0.1) 70%,
+      transparent 100%
+    );
+    animation: ${lineGlow} 5s ease-in-out infinite;
+    animation-delay: 1s;
+  }
+`;
+
+// Diagonal lines
+const DiagonalLines = styled.div`
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0.5;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -50%;
+    width: 200%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(135, 206, 235, 0.1), transparent);
+    transform: rotate(25deg);
+    transform-origin: center;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 30%;
+    right: -50%;
+    width: 200%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(135, 206, 235, 0.08), transparent);
+    transform: rotate(-15deg);
+    transform-origin: center;
+  }
+`;
+
+// Floating ambient text
+const AmbientText = styled.div<{ $top: string; $left: string; $delay: number; $size: number }>`
+  position: absolute;
+  top: ${props => props.$top};
+  left: ${props => props.$left};
+  font-family: 'Montserrat', sans-serif;
+  font-size: ${props => props.$size}px;
+  font-weight: 200;
+  letter-spacing: 8px;
+  text-transform: uppercase;
+  color: rgba(135, 206, 235, 0.08);
+  white-space: nowrap;
+  z-index: 2;
+  pointer-events: none;
+  animation: ${floatText} ${props => 15 + props.$delay}s ease-in-out infinite;
+  animation-delay: ${props => props.$delay}s;
+  user-select: none;
+
+  @media (max-width: 768px) {
+    font-size: ${props => props.$size * 0.6}px;
+    letter-spacing: 4px;
+  }
+`;
+
+// Planets
+const PlanetContainer = styled.div`
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  overflow: hidden;
+`;
+
+const Planet = styled.div<{ $size: number; $top: string; $left: string; $color: string; $blur: number }>`
+  position: absolute;
+  top: ${props => props.$top};
+  left: ${props => props.$left};
+  width: ${props => props.$size}px;
+  height: ${props => props.$size}px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 30% 30%,
+    ${props => props.$color} 0%,
+    rgba(0, 0, 0, 0.8) 70%,
+    transparent 100%
+  );
+  filter: blur(${props => props.$blur}px);
+  opacity: 0.4;
+  animation: ${float} ${props => 10 + props.$size / 10}s ease-in-out infinite;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: -20%;
+    border-radius: 50%;
+    background: radial-gradient(circle, ${props => props.$color}20 0%, transparent 70%);
+  }
+`;
+
+const OrbitingPlanet = styled.div<{ $orbitRadius: number; $size: number; $duration: number; $color: string }>`
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: ${props => props.$size}px;
+  height: ${props => props.$size}px;
+  margin: ${props => -props.$size / 2}px;
+  --orbit-radius: ${props => props.$orbitRadius}px;
+  animation: ${planetOrbit} ${props => props.$duration}s linear infinite;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: radial-gradient(
+      circle at 40% 40%,
+      ${props => props.$color} 0%,
+      rgba(20, 20, 30, 0.9) 60%,
+      transparent 100%
+    );
+    box-shadow: 0 0 ${props => props.$size}px ${props => props.$color}40;
+  }
+`;
+
+// Orbit rings
+const OrbitRing = styled.div<{ $size: number }>`
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: ${props => props.$size}px;
+  height: ${props => props.$size}px;
+  margin: ${props => -props.$size / 2}px;
+  border: 1px solid rgba(135, 206, 235, 0.05);
+  border-radius: 50%;
+  pointer-events: none;
 `;
 
 const MainContent = styled.main`
@@ -129,7 +333,7 @@ const MainContent = styled.main`
   align-items: center;
   padding: 60px 20px 40px;
   position: relative;
-  z-index: 5;
+  z-index: 10;
 `;
 
 // ============================================================================
@@ -141,11 +345,7 @@ const TitleContainer = styled.div`
   margin-bottom: 2rem;
 `;
 
-interface LetterProps {
-  delay: number;
-}
-
-const AnimatedLetter = styled.span<LetterProps>`
+const AnimatedLetter = styled.span<{ $delay: number }>`
   display: inline-block;
   font-family: 'Montserrat', sans-serif;
   font-weight: 200;
@@ -155,7 +355,7 @@ const AnimatedLetter = styled.span<LetterProps>`
   text-transform: uppercase;
   opacity: 0;
   animation: ${textReveal} 0.8s ease-out forwards;
-  animation-delay: ${props => props.delay}s;
+  animation-delay: ${props => props.$delay}s;
 
   &:hover {
     animation: ${glitchFlicker} 0.3s ease-out;
@@ -163,7 +363,7 @@ const AnimatedLetter = styled.span<LetterProps>`
 `;
 
 // ============================================================================
-// STYLED COMPONENTS - Logo & Orbital System
+// STYLED COMPONENTS - Logo
 // ============================================================================
 
 const LogoSystemContainer = styled.div`
@@ -178,10 +378,10 @@ const LogoSystemContainer = styled.div`
   }
 `;
 
-const CentralLogo = styled.div<{ src: string }>`
+const CentralLogo = styled.div<{ $src: string }>`
   position: absolute;
   inset: 60px;
-  background-image: url(${props => props.src});
+  background-image: url(${props => props.$src});
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
@@ -189,57 +389,49 @@ const CentralLogo = styled.div<{ src: string }>`
   animation: ${float} 6s ease-in-out infinite, ${subtleGlow} 4s ease-in-out infinite;
 `;
 
-// Orbital Logo con animazione complessa: orbita -> convergenza -> dissolve
+// Orbital animation
 interface OrbitalLogoProps {
-  index: number;
-  totalLogos: number;
-  animationPhase: 'orbit' | 'converge' | 'dissolve' | 'hidden';
-  orbitRadius: number;
-  size: number;
-  speed: number;
-  initialAngle: number;
+  $index: number;
+  $totalLogos: number;
+  $animationPhase: 'orbit' | 'converge' | 'dissolve' | 'hidden';
+  $orbitRadius: number;
+  $size: number;
+  $speed: number;
+  $initialAngle: number;
 }
 
 const getOrbitAnimation = (props: OrbitalLogoProps) => {
-  const { orbitRadius, initialAngle, speed } = props;
+  const { $orbitRadius, $initialAngle, $speed } = props;
 
   return keyframes`
     0% {
-      transform: rotate(${initialAngle}deg) translateX(${orbitRadius}px) rotate(-${initialAngle}deg);
+      transform: rotate(${$initialAngle}deg) translateX(${$orbitRadius}px) rotate(-${$initialAngle}deg);
       opacity: 0;
     }
     10% {
       opacity: 0.9;
     }
     100% {
-      transform: rotate(${initialAngle + 360 * speed}deg) translateX(${orbitRadius}px) rotate(-${initialAngle + 360 * speed}deg);
+      transform: rotate(${$initialAngle + 360 * $speed}deg) translateX(${$orbitRadius}px) rotate(-${$initialAngle + 360 * $speed}deg);
       opacity: 0.9;
     }
   `;
 };
 
 const getConvergeAnimation = (props: OrbitalLogoProps) => {
-  const { orbitRadius, initialAngle } = props;
-  const currentAngle = initialAngle + 360; // Posizione finale dell'orbita
+  const { $orbitRadius, $initialAngle } = props;
+  const currentAngle = $initialAngle + 360;
 
   return keyframes`
     0% {
-      transform: rotate(${currentAngle}deg) translateX(${orbitRadius}px) rotate(-${currentAngle}deg);
+      transform: rotate(${currentAngle}deg) translateX(${$orbitRadius}px) rotate(-${currentAngle}deg);
       opacity: 0.9;
       filter: blur(0) brightness(1);
     }
-    30% {
-      transform: rotate(${currentAngle + 45}deg) translateX(${orbitRadius * 0.7}px) rotate(-${currentAngle + 45}deg);
-      opacity: 0.95;
-    }
     60% {
-      transform: rotate(${currentAngle + 90}deg) translateX(${orbitRadius * 0.4}px) rotate(-${currentAngle + 90}deg);
+      transform: rotate(${currentAngle + 90}deg) translateX(${$orbitRadius * 0.4}px) rotate(-${currentAngle + 90}deg);
       opacity: 1;
       filter: blur(0) brightness(1.2);
-    }
-    85% {
-      transform: rotate(${currentAngle + 120}deg) translateX(${orbitRadius * 0.15}px) rotate(-${currentAngle + 120}deg);
-      opacity: 0.9;
     }
     100% {
       transform: rotate(${currentAngle + 135}deg) translateX(0) rotate(-${currentAngle + 135}deg) scale(0.5);
@@ -251,10 +443,10 @@ const getConvergeAnimation = (props: OrbitalLogoProps) => {
 
 const OrbitalLogoElement = styled.div<OrbitalLogoProps>`
   position: absolute;
-  width: ${props => props.size}px;
-  height: ${props => props.size}px;
-  top: calc(50% - ${props => props.size / 2}px);
-  left: calc(50% - ${props => props.size / 2}px);
+  width: ${props => props.$size}px;
+  height: ${props => props.$size}px;
+  top: calc(50% - ${props => props.$size / 2}px);
+  left: calc(50% - ${props => props.$size / 2}px);
   background-image: url(${blendLogo});
   background-size: contain;
   background-repeat: no-repeat;
@@ -262,13 +454,13 @@ const OrbitalLogoElement = styled.div<OrbitalLogoProps>`
   opacity: 0;
   filter: brightness(1.3) contrast(1.1) drop-shadow(0 0 8px rgba(135, 206, 235, 0.6));
   transform-origin: center center;
-  z-index: ${props => 5 - props.index};
+  z-index: ${props => 5 - props.$index};
 
   ${props => {
-    switch (props.animationPhase) {
+    switch (props.$animationPhase) {
       case 'orbit':
         return css`
-          animation: ${getOrbitAnimation(props)} ${8 / props.speed}s linear forwards;
+          animation: ${getOrbitAnimation(props)} ${8 / props.$speed}s linear forwards;
         `;
       case 'converge':
         return css`
@@ -287,7 +479,7 @@ const OrbitalLogoElement = styled.div<OrbitalLogoProps>`
 `;
 
 // ============================================================================
-// STYLED COMPONENTS - Navigation Buttons
+// STYLED COMPONENTS - Navigation
 // ============================================================================
 
 const NavigationContainer = styled.nav`
@@ -303,11 +495,6 @@ const NavigationContainer = styled.nav`
   }
 `;
 
-interface NavButtonProps {
-  isActive: boolean;
-  isPulsing: boolean;
-}
-
 const NavButtonWrapper = styled.div`
   display: flex;
   flex-direction: column;
@@ -315,12 +502,12 @@ const NavButtonWrapper = styled.div`
   gap: 12px;
 `;
 
-const NavButton = styled.button<NavButtonProps>`
+const NavButton = styled.button<{ $isActive: boolean; $isPulsing: boolean }>`
   position: relative;
   padding: 14px 32px;
   background: transparent;
-  border: 1px solid rgba(135, 206, 235, ${props => props.isActive ? 0.8 : 0.25});
-  color: rgba(255, 255, 255, ${props => props.isActive ? 1 : 0.7});
+  border: 1px solid rgba(135, 206, 235, ${props => props.$isActive ? 0.8 : 0.25});
+  color: rgba(255, 255, 255, ${props => props.$isActive ? 1 : 0.7});
   font-family: 'Montserrat', sans-serif;
   font-size: 11px;
   font-weight: 500;
@@ -330,12 +517,11 @@ const NavButton = styled.button<NavButtonProps>`
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
 
-  ${props => props.isActive && css`
+  ${props => props.$isActive && css`
     background: rgba(135, 206, 235, 0.08);
     animation: ${pulseGlow} 2s ease-in-out infinite;
   `}
 
-  /* Effetto bordo luminoso */
   &::before {
     content: '';
     position: absolute;
@@ -349,11 +535,10 @@ const NavButton = styled.button<NavButtonProps>`
     -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
-    opacity: ${props => props.isActive ? 1 : 0};
+    opacity: ${props => props.$isActive ? 1 : 0};
     transition: opacity 0.4s ease;
   }
 
-  /* Effetto hover glow interno */
   &::after {
     content: '';
     position: absolute;
@@ -372,36 +557,17 @@ const NavButton = styled.button<NavButtonProps>`
     color: rgba(255, 255, 255, 1);
     transform: translateY(-2px);
 
-    &::before {
-      opacity: 1;
-    }
-
-    &::after {
-      width: 200%;
-      height: 200%;
-    }
-  }
-
-  &:active {
-    transform: translateY(0);
+    &::before { opacity: 1; }
+    &::after { width: 200%; height: 200%; }
   }
 
   @media (max-width: 480px) {
     padding: 12px 24px;
     font-size: 10px;
-    letter-spacing: 2px;
   }
 `;
 
-// ============================================================================
-// STYLED COMPONENTS - Ignition Indicator (Effetto Accensione)
-// ============================================================================
-
-interface IgnitionProps {
-  isLit: boolean;
-}
-
-const IgnitionIndicator = styled.div<IgnitionProps>`
+const IgnitionIndicator = styled.div<{ $isLit: boolean }>`
   position: relative;
   width: 40px;
   height: 6px;
@@ -410,43 +576,25 @@ const IgnitionIndicator = styled.div<IgnitionProps>`
   overflow: hidden;
   cursor: pointer;
   transition: all 0.3s ease;
+  border: 1px solid rgba(135, 206, 235, ${props => props.$isLit ? 0.4 : 0.15});
 
-  /* Bordo sottile */
-  border: 1px solid rgba(135, 206, 235, ${props => props.isLit ? 0.4 : 0.15});
-
-  /* Core luminoso */
   &::before {
     content: '';
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: ${props => props.isLit ? '70%' : '20%'};
+    width: ${props => props.$isLit ? '70%' : '20%'};
     height: 2px;
-    background: ${props => props.isLit
+    background: ${props => props.$isLit
       ? 'linear-gradient(90deg, rgba(135, 206, 235, 0.6), rgba(255, 255, 255, 0.9), rgba(135, 206, 235, 0.6))'
       : 'rgba(135, 206, 235, 0.2)'
     };
     border-radius: 1px;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    ${props => props.isLit && css`
+    ${props => props.$isLit && css`
       animation: ${igniteGlow} 1.5s ease-in-out infinite;
     `}
-  }
-
-  /* Riflesso superiore */
-  &::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 10%;
-    width: 80%;
-    height: 1px;
-    background: linear-gradient(90deg,
-      transparent,
-      rgba(255, 255, 255, ${props => props.isLit ? 0.3 : 0.1}),
-      transparent
-    );
   }
 
   &:hover {
@@ -455,14 +603,13 @@ const IgnitionIndicator = styled.div<IgnitionProps>`
   }
 `;
 
-// Etichetta sotto l'indicatore
-const IgnitionLabel = styled.span<IgnitionProps>`
+const IgnitionLabel = styled.span<{ $isLit: boolean }>`
   font-family: 'Montserrat', sans-serif;
   font-size: 8px;
   font-weight: 400;
   letter-spacing: 2px;
   text-transform: uppercase;
-  color: rgba(135, 206, 235, ${props => props.isLit ? 0.8 : 0.4});
+  color: rgba(135, 206, 235, ${props => props.$isLit ? 0.8 : 0.4});
   transition: color 0.3s ease;
   margin-top: 4px;
 `;
@@ -502,21 +649,15 @@ const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const title = "Blend Association";
 
-  // Stati per animazioni
   const [orbitalPhase, setOrbitalPhase] = useState<'orbit' | 'converge' | 'dissolve' | 'hidden'>('orbit');
   const [activeButtons, setActiveButtons] = useState<Set<string>>(new Set());
   const [pulsingButton, setPulsingButton] = useState<string | null>(null);
 
-  // Ref per gestire i timeout
   const animationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Gestione fasi animazione orbitale (una volta sola)
   useEffect(() => {
-    // Fase 1: Orbita per 6 secondi
     animationTimeoutRef.current = setTimeout(() => {
       setOrbitalPhase('converge');
-
-      // Fase 2: Convergenza per 2.5 secondi, poi dissolve
       animationTimeoutRef.current = setTimeout(() => {
         setOrbitalPhase('hidden');
       }, 2500);
@@ -529,19 +670,12 @@ const HomePage: React.FC = () => {
     };
   }, []);
 
-  // Handler per i pulsanti
   const handleButtonClick = useCallback((item: NavigationItem) => {
-    // Attiva l'indicatore
     setActiveButtons(prev => new Set(prev).add(item.id));
     setPulsingButton(item.id);
-
-    // Naviga dopo un breve delay per l'effetto visivo
-    setTimeout(() => {
-      navigate(item.path);
-    }, 300);
+    setTimeout(() => navigate(item.path), 300);
   }, [navigate]);
 
-  // Toggle indicatore accensione
   const handleIgnitionToggle = useCallback((itemId: string) => {
     setActiveButtons(prev => {
       const newSet = new Set(prev);
@@ -556,42 +690,60 @@ const HomePage: React.FC = () => {
 
   return (
     <PageContainer>
+      <Scanline />
       <ParticleField />
+      <GridLines />
+      <DiagonalLines />
+
+      {/* Floating ambient text */}
+      <AmbientText $top="15%" $left="5%" $delay={0} $size={14}>underground music</AmbientText>
+      <AmbientText $top="75%" $left="70%" $delay={3} $size={12}>minimal deep tech</AmbientText>
+      <AmbientText $top="85%" $left="10%" $delay={5} $size={10}>blend association</AmbientText>
+      <AmbientText $top="25%" $left="75%" $delay={2} $size={11}>electronic culture</AmbientText>
+      <AmbientText $top="60%" $left="3%" $delay={4} $size={9}>since 2019</AmbientText>
+
+      {/* Planets */}
+      <PlanetContainer>
+        <Planet $size={200} $top="10%" $left="-5%" $color="rgba(70, 100, 150, 0.3)" $blur={2} />
+        <Planet $size={80} $top="70%" $left="85%" $color="rgba(135, 206, 235, 0.2)" $blur={1} />
+        <Planet $size={40} $top="20%" $left="90%" $color="rgba(100, 150, 200, 0.3)" $blur={0} />
+        <Planet $size={150} $top="80%" $left="-3%" $color="rgba(50, 80, 120, 0.25)" $blur={3} />
+
+        {/* Orbit rings for central system */}
+        <OrbitRing $size={500} />
+        <OrbitRing $size={400} />
+        <OrbitRing $size={300} />
+
+        {/* Small orbiting planets */}
+        <OrbitingPlanet $orbitRadius={280} $size={8} $duration={60} $color="rgba(135, 206, 235, 0.6)" />
+        <OrbitingPlanet $orbitRadius={220} $size={5} $duration={45} $color="rgba(100, 150, 200, 0.5)" />
+      </PlanetContainer>
 
       <MainContent>
-        {/* Titolo animato */}
         <TitleContainer>
           {title.split('').map((letter, index) => (
-            <AnimatedLetter
-              key={index}
-              delay={0.5 + index * 0.05}
-            >
+            <AnimatedLetter key={index} $delay={0.5 + index * 0.05}>
               {letter === ' ' ? '\u00A0' : letter}
             </AnimatedLetter>
           ))}
         </TitleContainer>
 
-        {/* Sistema Logo con orbite */}
         <LogoSystemContainer>
-          {/* Loghi orbitanti */}
           {orbitalConfigs.map((config, index) => (
             <OrbitalLogoElement
               key={index}
-              index={index}
-              totalLogos={orbitalConfigs.length}
-              animationPhase={orbitalPhase}
-              orbitRadius={config.orbitRadius}
-              size={config.size}
-              speed={config.speed}
-              initialAngle={config.initialAngle}
+              $index={index}
+              $totalLogos={orbitalConfigs.length}
+              $animationPhase={orbitalPhase}
+              $orbitRadius={config.orbitRadius}
+              $size={config.size}
+              $speed={config.speed}
+              $initialAngle={config.initialAngle}
             />
           ))}
-
-          {/* Logo centrale */}
-          <CentralLogo src={blendLogo} />
+          <CentralLogo $src={blendLogo} />
         </LogoSystemContainer>
 
-        {/* Navigazione con effetto accensione */}
         <NavigationContainer>
           {navigationItems.map((item) => {
             const isActive = activeButtons.has(item.id);
@@ -600,22 +752,20 @@ const HomePage: React.FC = () => {
             return (
               <NavButtonWrapper key={item.id}>
                 <NavButton
-                  isActive={isActive}
-                  isPulsing={isPulsing}
+                  $isActive={isActive}
+                  $isPulsing={isPulsing}
                   onClick={() => handleButtonClick(item)}
                 >
                   {item.label}
                 </NavButton>
-
-                {/* Indicatore di accensione */}
                 <IgnitionIndicator
-                  isLit={isActive}
+                  $isLit={isActive}
                   onClick={(e) => {
                     e.stopPropagation();
                     handleIgnitionToggle(item.id);
                   }}
                 />
-                <IgnitionLabel isLit={isActive}>
+                <IgnitionLabel $isLit={isActive}>
                   {isActive ? 'on' : 'off'}
                 </IgnitionLabel>
               </NavButtonWrapper>
