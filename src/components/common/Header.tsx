@@ -85,12 +85,27 @@ const Nav = styled.nav`
   align-items: center;
   gap: 40px;
 
+  @media (max-width: 900px) {
+    gap: 25px;
+  }
+
   @media (max-width: 768px) {
-    gap: 20px;
+    gap: 18px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    max-width: 65%;
+    padding: 5px 0;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
   }
 
   @media (max-width: 480px) {
-    gap: 15px;
+    gap: 14px;
+    max-width: 60%;
   }
 `;
 
@@ -104,6 +119,8 @@ const NavLink = styled(Link)<{ $active: boolean }>`
   transition: all 0.3s ease;
   position: relative;
   padding: 8px 0;
+  white-space: nowrap;
+  flex-shrink: 0;
 
   &::after {
     content: '';
@@ -125,12 +142,8 @@ const NavLink = styled(Link)<{ $active: boolean }>`
   }
 
   @media (max-width: 768px) {
-    font-size: 10px;
-    letter-spacing: 1px;
-  }
-
-  @media (max-width: 480px) {
     font-size: 9px;
+    letter-spacing: 1px;
   }
 `;
 
