@@ -17,6 +17,17 @@ import { GalleriaItem } from '../types';
 // Cache in memoria per ridurre chiamate al DB
 const cache = new Map<string, { data: any; timestamp: number }>();
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minuti
+const QUERY_TIMEOUT = 10000; // 10 secondi timeout
+
+// Helper per aggiungere timeout alle Promise
+function withTimeout<T>(promise: Promise<T>, ms: number, errorMessage: string): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(errorMessage)), ms)
+    )
+  ]);
+}
 
 class GalleriaService {
   private readonly collectionName = 'galleria';
@@ -39,10 +50,10 @@ class GalleriaService {
     cache.clear();
   }
 
-  // Ottieni elementi galleria pubblici (con cache)
+  // Ottieni elementi galleria pubblici (con cache e timeout)
   async getGalleriaPubblica(): Promise<GalleriaItem[]> {
     const cacheKey = 'galleria-pubblica';
-    
+
     // Controlla cache
     const cached = this.getCached<GalleriaItem[]>(cacheKey);
     if (cached) return cached;
@@ -56,7 +67,12 @@ class GalleriaService {
         limit(100)
       );
 
-      const snapshot = await getDocs(q);
+      const snapshot = await withTimeout(
+        getDocs(q),
+        QUERY_TIMEOUT,
+        'Timeout caricamento galleria. Verifica che gli indici Firestore siano configurati.'
+      );
+
       const items: GalleriaItem[] = [];
 
       snapshot.forEach((doc) => {
@@ -74,8 +90,12 @@ class GalleriaService {
       this.setCache(cacheKey, items);
       return items;
 
-    } catch (error) {
-      console.error('Errore caricamento galleria:', error);
+    } catch (error: any) {
+      if (error?.message?.includes('index') || error?.code === 'failed-precondition') {
+        console.error('Errore: Indice Firestore mancante. Esegui: firebase deploy --only firestore:indexes');
+      } else {
+        console.error('Errore caricamento galleria:', error);
+      }
       return [];
     }
   }
@@ -86,7 +106,12 @@ class GalleriaService {
       const galleriaRef = collection(db, this.collectionName);
       const q = query(galleriaRef, orderBy('createdAt', 'desc'));
 
-      const snapshot = await getDocs(q);
+      const snapshot = await withTimeout(
+        getDocs(q),
+        QUERY_TIMEOUT,
+        'Timeout caricamento galleria admin.'
+      );
+
       const items: GalleriaItem[] = [];
 
       snapshot.forEach((doc) => {
@@ -111,7 +136,7 @@ class GalleriaService {
   // Ottieni elementi per categoria
   async getGalleriaByCategoria(categoria: string): Promise<GalleriaItem[]> {
     const cacheKey = `galleria-cat-${categoria}`;
-    
+
     // Controlla cache
     const cached = this.getCached<GalleriaItem[]>(cacheKey);
     if (cached) return cached;
@@ -126,7 +151,12 @@ class GalleriaService {
         limit(50)
       );
 
-      const snapshot = await getDocs(q);
+      const snapshot = await withTimeout(
+        getDocs(q),
+        QUERY_TIMEOUT,
+        `Timeout caricamento galleria categoria ${categoria}.`
+      );
+
       const items: GalleriaItem[] = [];
 
       snapshot.forEach((doc) => {
@@ -144,8 +174,12 @@ class GalleriaService {
       this.setCache(cacheKey, items);
       return items;
 
-    } catch (error) {
-      console.error(`Errore caricamento galleria categoria ${categoria}:`, error);
+    } catch (error: any) {
+      if (error?.message?.includes('index') || error?.code === 'failed-precondition') {
+        console.error(`Errore: Indice Firestore mancante per categoria ${categoria}.`);
+      } else {
+        console.error(`Errore caricamento galleria categoria ${categoria}:`, error);
+      }
       return [];
     }
   }
@@ -162,10 +196,10 @@ class GalleriaService {
       };
 
       const docRef = await addDoc(collection(db, this.collectionName), itemData);
-      
+
       // Pulisci cache
       this.clearCache();
-      
+
       return docRef.id;
     } catch (error) {
       console.error('Errore creazione elemento galleria:', error);
@@ -187,7 +221,7 @@ class GalleriaService {
       }
 
       await updateDoc(itemRef, updateData);
-      
+
       // Pulisci cache
       this.clearCache();
     } catch (error) {
@@ -200,7 +234,7 @@ class GalleriaService {
   async deleteGalleriaItem(id: string): Promise<void> {
     try {
       await deleteDoc(doc(db, this.collectionName, id));
-      
+
       // Pulisci cache
       this.clearCache();
     } catch (error) {
@@ -212,7 +246,7 @@ class GalleriaService {
   // Elementi in evidenza per homepage
   async getGalleriaInEvidenza(limite = 6): Promise<GalleriaItem[]> {
     const cacheKey = `galleria-evidenza-${limite}`;
-    
+
     // Controlla cache
     const cached = this.getCached<GalleriaItem[]>(cacheKey);
     if (cached) return cached;
@@ -227,7 +261,12 @@ class GalleriaService {
         limit(limite)
       );
 
-      const snapshot = await getDocs(q);
+      const snapshot = await withTimeout(
+        getDocs(q),
+        QUERY_TIMEOUT,
+        'Timeout caricamento galleria in evidenza.'
+      );
+
       const items: GalleriaItem[] = [];
 
       snapshot.forEach((doc) => {
@@ -245,8 +284,12 @@ class GalleriaService {
       this.setCache(cacheKey, items);
       return items;
 
-    } catch (error) {
-      console.error('Errore caricamento galleria in evidenza:', error);
+    } catch (error: any) {
+      if (error?.message?.includes('index') || error?.code === 'failed-precondition') {
+        console.error('Errore: Indice Firestore mancante per galleria in evidenza.');
+      } else {
+        console.error('Errore caricamento galleria in evidenza:', error);
+      }
       return [];
     }
   }
