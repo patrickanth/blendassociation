@@ -1,12 +1,102 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { Link } from 'react-router-dom';
-import styled from 'styled-components';
-import Header from '../components/common/Header';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import styled, { keyframes, css } from 'styled-components';
 import blendLogo from '../assets/logowbig.png';
 
-// Styled Components
+// ============================================================================
+// KEYFRAMES - Animazioni
+// ============================================================================
+
+const fadeIn = keyframes`
+  from { opacity: 0; }
+  to { opacity: 1; }
+`;
+
+const float = keyframes`
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-15px); }
+`;
+
+const subtleGlow = keyframes`
+  0%, 100% {
+    filter: drop-shadow(0 0 20px rgba(135, 206, 235, 0.3))
+            drop-shadow(0 0 40px rgba(70, 130, 180, 0.2));
+  }
+  50% {
+    filter: drop-shadow(0 0 30px rgba(135, 206, 235, 0.5))
+            drop-shadow(0 0 60px rgba(70, 130, 180, 0.3));
+  }
+`;
+
+const glitchFlicker = keyframes`
+  0%, 100% { opacity: 1; transform: translate(0); }
+  92% { opacity: 1; transform: translate(0); }
+  93% { opacity: 0.8; transform: translate(-2px, 1px); }
+  94% { opacity: 1; transform: translate(2px, -1px); }
+  95% { opacity: 0.9; transform: translate(-1px, 2px); }
+  96% { opacity: 1; transform: translate(0); }
+`;
+
+const textReveal = keyframes`
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+    filter: blur(4px);
+  }
+  60% {
+    opacity: 1;
+    filter: blur(0);
+  }
+  70% {
+    transform: translateY(-2px) skewX(2deg);
+  }
+  85% {
+    transform: translateY(1px) skewX(-1deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) skewX(0);
+    filter: blur(0);
+  }
+`;
+
+const pulseGlow = keyframes`
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(135, 206, 235, 0.3),
+                0 0 10px rgba(135, 206, 235, 0.2),
+                0 0 20px rgba(70, 130, 180, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 10px rgba(135, 206, 235, 0.5),
+                0 0 20px rgba(135, 206, 235, 0.3),
+                0 0 40px rgba(70, 130, 180, 0.2);
+  }
+`;
+
+const igniteGlow = keyframes`
+  0% {
+    opacity: 0.3;
+    box-shadow: 0 0 2px rgba(135, 206, 235, 0.2);
+  }
+  50% {
+    opacity: 1;
+    box-shadow: 0 0 8px rgba(135, 206, 235, 0.8),
+                0 0 16px rgba(135, 206, 235, 0.5),
+                0 0 24px rgba(70, 130, 180, 0.3);
+  }
+  100% {
+    opacity: 0.6;
+    box-shadow: 0 0 4px rgba(135, 206, 235, 0.5),
+                0 0 8px rgba(135, 206, 235, 0.3);
+  }
+`;
+
+// ============================================================================
+// STYLED COMPONENTS - Layout
+// ============================================================================
+
 const PageContainer = styled.div`
-  height: 100vh;
+  min-height: 100vh;
   width: 100%;
   background-color: #000000;
   display: flex;
@@ -15,785 +105,524 @@ const PageContainer = styled.div`
   position: relative;
 `;
 
-const LogoContainer = styled.div`
+const ParticleField = styled.div`
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  opacity: 0.4;
+  background-image:
+    radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,0.8), transparent),
+    radial-gradient(1px 1px at 40% 70%, rgba(255,255,255,0.6), transparent),
+    radial-gradient(1px 1px at 60% 20%, rgba(255,255,255,0.7), transparent),
+    radial-gradient(1.5px 1.5px at 80% 50%, rgba(255,255,255,0.5), transparent),
+    radial-gradient(1px 1px at 10% 80%, rgba(255,255,255,0.6), transparent),
+    radial-gradient(1.5px 1.5px at 90% 10%, rgba(255,255,255,0.4), transparent);
+  background-size: 250px 250px;
+  animation: ${fadeIn} 2s ease-out;
+`;
+
+const MainContent = styled.main`
   flex: 1;
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
-  height: calc(100vh - 80px);
+  padding: 60px 20px 40px;
   position: relative;
   z-index: 5;
-  flex-direction: column;
 `;
 
-// Nuovo componente per l'effetto glitch
-const GlitchText = styled.div`
-  font-family: 'Montserrat', sans-serif;
-  font-weight: 300;
-  font-size: 1.8rem;
-  color: rgba(255, 255, 255, 0.9);
+// ============================================================================
+// STYLED COMPONENTS - Title
+// ============================================================================
+
+const TitleContainer = styled.div`
   text-align: center;
-  margin-bottom: 2.5rem;
-  position: relative;
-  letter-spacing: 0.3em;
-  text-transform: uppercase;
-  animation: final-flicker 0.5s 2.4s forwards;
-  width: 100%;
-  padding: 0 10px;
-  
-  /* Responsive per dispositivi mobili */
-  @media (max-width: 768px) {
-    font-size: 1.2rem;
-    letter-spacing: 0.2em;
-    margin-bottom: 1.5rem;
-  }
-  
-  /* Per schermi molto piccoli */
-  @media (max-width: 480px) {
-    font-size: 1rem;
-    letter-spacing: 0.15em;
-    margin-bottom: 1rem;
-  }
-  
-  @keyframes final-flicker {
-    0% {
-      opacity: 1;
-    }
-    10% {
-      opacity: 0;
-      text-shadow: none;
-    }
-    13% {
-      opacity: 1;
-      text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
-    }
-    15% {
-      opacity: 0;
-      text-shadow: none;
-    }
-    17% {
-      opacity: 1;
-      text-shadow: 0 0 8px rgba(70, 130, 180, 0.6);
-    }
-    22% {
-      opacity: 0;
-      text-shadow: none;
-    }
-    25% {
-      opacity: 1;
-      text-shadow: 0 0 12px rgba(255, 255, 255, 0.9), 0 0 20px rgba(70, 130, 180, 0.5);
-    }
-    30% {
-      opacity: 0;
-      text-shadow: none;
-    }
-    33% {
-      opacity: 1;
-      text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
-    }
-    100% {
-      opacity: 1;
-      text-shadow: 0 0 3px rgba(255, 255, 255, 0.3);
-    }
-  }
+  margin-bottom: 2rem;
 `;
 
-interface GlitchLetterProps {
+interface LetterProps {
   delay: number;
-  effectType?: 'teleport' | 'flicker' | 'normal';
 }
 
-const GlitchLetter = styled.span<GlitchLetterProps>`
+const AnimatedLetter = styled.span<LetterProps>`
   display: inline-block;
-  position: relative;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 200;
+  font-size: clamp(1.2rem, 4vw, 2rem);
+  color: rgba(255, 255, 255, 0.9);
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
   opacity: 0;
-  animation: ${props => {
-    switch(props.effectType) {
-      case 'teleport':
-        return `glitch-teleport 1s ${props.delay}s forwards`;
-      case 'flicker':
-        return `glitch-flicker 1s ${props.delay}s forwards`;
-      default:
-        return `glitch-assemble 0.8s ${props.delay}s forwards`;
-    }
-  }};
+  animation: ${textReveal} 0.8s ease-out forwards;
+  animation-delay: ${props => props.delay}s;
 
-  @keyframes glitch-assemble {
-    0% {
-      opacity: 0;
-      transform: translateY(5px);
-      filter: blur(8px);
-    }
-    30% {
-      opacity: 0.7;
-      transform: translateY(-2px);
-      filter: blur(0);
-    }
-    33% {
-      opacity: 1;
-      transform: translateY(0) skewX(10deg);
-      filter: blur(2px);
-    }
-    38% {
-      transform: skewX(-5deg);
-      filter: blur(0);
-    }
-    42% {
-      transform: skewX(2deg);
-      filter: blur(1px);
-    }
-    50% {
-      transform: skewX(0);
-      filter: blur(0);
-    }
-    100% {
-      opacity: 1;
-      transform: translateY(0);
-      filter: blur(0);
-    }
-  }
-
-  @keyframes glitch-teleport {
-    0% {
-      opacity: 0;
-      transform: translate(15px, 5px);
-      filter: blur(8px);
-    }
-    10% {
-      opacity: 1;
-      transform: translate(-30px, -10px);
-      filter: blur(0);
-    }
-    15% {
-      transform: translate(5px, 10px) skewX(20deg);
-      filter: blur(1px);
-    }
-    25% {
-      opacity: 0.8;
-      transform: translate(-15px, 0) skewX(-10deg);
-    }
-    40% {
-      opacity: 1;
-      transform: translate(25px, -5px);
-      filter: blur(2px);
-    }
-    50% {
-      transform: translate(0, 0) skewX(5deg);
-      filter: blur(0);
-    }
-    60% {
-      transform: translate(0, 0) skewX(-2deg);
-    }
-    100% {
-      opacity: 1;
-      transform: translate(0, 0);
-      filter: blur(0);
-    }
-  }
-
-  @keyframes glitch-flicker {
-    0% {
-      opacity: 0;
-      transform: translateY(5px);
-      filter: blur(8px);
-    }
-    20% {
-      opacity: 1;
-      filter: blur(0);
-    }
-    25% {
-      opacity: 0;
-    }
-    30% {
-      opacity: 1;
-      transform: translateY(-2px) skewX(5deg);
-    }
-    35% {
-      opacity: 0;
-    }
-    40% {
-      opacity: 1;
-      transform: translateY(0) skewX(-5deg);
-    }
-    50% {
-      opacity: 0.7;
-    }
-    55% {
-      opacity: 1;
-      transform: skewX(2deg);
-    }
-    70% {
-      transform: skewX(0);
-    }
-    100% {
-      opacity: 1;
-      transform: translateY(0);
-      filter: blur(0);
-    }
+  &:hover {
+    animation: ${glitchFlicker} 0.3s ease-out;
   }
 `;
 
-// Nuovo componente per il logo con effetto glitch avanzato
-interface GlitchLogoProps {
-  src: string;
-}
+// ============================================================================
+// STYLED COMPONENTS - Logo & Orbital System
+// ============================================================================
 
-const GlitchLogo = styled.div<GlitchLogoProps>`
+const LogoSystemContainer = styled.div`
   position: relative;
-  width: 100%;
-  height: 100%;
+  width: 320px;
+  height: 320px;
+  margin: 1rem 0 3rem;
+
+  @media (max-width: 480px) {
+    width: 260px;
+    height: 260px;
+  }
+`;
+
+const CentralLogo = styled.div<{ src: string }>`
+  position: absolute;
+  inset: 60px;
   background-image: url(${props => props.src});
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
-  animation: float 6s ease-in-out infinite, logo-flicker 8s infinite;
-  z-index: 1;
-  
-  &::before, &::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-image: url(${props => props.src});
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
-    z-index: -1;
-  }
-  
-  &::before {
-    mix-blend-mode: screen;
-    transform: translateX(-2%) skewX(2deg);
-    filter: hue-rotate(320deg) brightness(1.3) contrast(1.5);
-    opacity: 0;
-    animation: glitch-layer1 4s infinite;
-  }
-  
-  &::after {
-    mix-blend-mode: multiply;
-    transform: translateX(2%) skewY(-1deg);
-    filter: hue-rotate(180deg) brightness(1.7) contrast(1.2);
-    opacity: 0;
-    animation: glitch-layer2 5s infinite;
-  }
-  
-  @keyframes glitch-layer1 {
-    0%, 93%, 100% { opacity: 0; }
-    10% { opacity: 0.4; transform: translate(-5px, 2px) skewX(4deg); }
-    12% { opacity: 0; transform: translate(0, 0) skewX(0); }
-    35% { opacity: 0.3; transform: translate(3px, -1px) skewY(-2deg); }
-    37% { opacity: 0; transform: translate(0, 0) skewY(0); }
-    60% { opacity: 0.2; transform: translate(-5px, -2px) scale(1.02); }
-    63% { opacity: 0; transform: translate(0, 0) scale(1); }
-    80% { opacity: 0.5; transform: translate(5px, 1px) skewX(-4deg); }
-    83% { opacity: 0; transform: translate(0, 0) skewX(0); }
-  }
-  
-  @keyframes glitch-layer2 {
-    0%, 93%, 100% { opacity: 0; }
-    20% { opacity: 0.3; transform: translate(5px, 2px) skewY(3deg); }
-    22% { opacity: 0; transform: translate(0, 0) skewY(0); }
-    45% { opacity: 0.4; transform: translate(-3px, -1px) skewX(-2deg) scale(0.98); }
-    47% { opacity: 0; transform: translate(0, 0) skewX(0) scale(1); }
-    70% { opacity: 0.2; transform: translate(5px, 2px) scale(1.02); }
-    73% { opacity: 0; transform: translate(0, 0) scale(1); }
-    88% { opacity: 0.3; transform: translate(-3px, -2px) skewY(-3deg); }
-    90% { opacity: 0; transform: translate(0, 0) skewY(0); }
-  }
-  
-  @keyframes logo-flicker {
-    0%, 100% { 
-      filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.5)) drop-shadow(0 0 40px rgba(70, 130, 180, 0.3));
-    }
-    3% { filter: drop-shadow(0 0 30px rgba(70, 130, 180, 0.8)); }
-    5% { filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.5)); }
-    10% { filter: drop-shadow(0 0 40px rgba(255, 255, 255, 0.8)); }
-    11% { filter: drop-shadow(0 0 20px rgba(70, 130, 180, 0.5)); }
-    40% { filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.5)); }
-    42% { filter: drop-shadow(0 0 35px rgba(255, 255, 255, 0.7)); }
-    43% { filter: drop-shadow(0 0 15px rgba(70, 130, 180, 0.4)); }
-    65% { filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.5)); }
-    68% { filter: drop-shadow(0 0 30px rgba(70, 130, 180, 0.6)); }
-    70% { filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.5)); }
-    89% { filter: drop-shadow(0 0 25px rgba(255, 255, 255, 0.6)); }
-    91% { filter: drop-shadow(0 0 30px rgba(70, 130, 180, 0.7)); }
-    92% { filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.5)); }
-  }
-  
-  @keyframes float {
+  z-index: 10;
+  animation: ${float} 6s ease-in-out infinite, ${subtleGlow} 4s ease-in-out infinite;
+`;
+
+// Orbital Logo con animazione complessa: orbita -> convergenza -> dissolve
+interface OrbitalLogoProps {
+  index: number;
+  totalLogos: number;
+  animationPhase: 'orbit' | 'converge' | 'dissolve' | 'hidden';
+  orbitRadius: number;
+  size: number;
+  speed: number;
+  initialAngle: number;
+}
+
+const getOrbitAnimation = (props: OrbitalLogoProps) => {
+  const { orbitRadius, initialAngle, speed } = props;
+
+  return keyframes`
     0% {
-      transform: translateY(0px);
+      transform: rotate(${initialAngle}deg) translateX(${orbitRadius}px) rotate(-${initialAngle}deg);
+      opacity: 0;
     }
-    50% {
-      transform: translateY(-20px);
+    10% {
+      opacity: 0.9;
     }
     100% {
-      transform: translateY(0px);
+      transform: rotate(${initialAngle + 360 * speed}deg) translateX(${orbitRadius}px) rotate(-${initialAngle + 360 * speed}deg);
+      opacity: 0.9;
     }
-  }
-`;
+  `;
+};
 
-// Componente per l'effetto anello di Saturno
-const SaturnRingContainer = styled.div`
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  perspective: 1000px;
-  transform-style: preserve-3d;
-`;
+const getConvergeAnimation = (props: OrbitalLogoProps) => {
+  const { orbitRadius, initialAngle } = props;
+  const currentAngle = initialAngle + 360; // Posizione finale dell'orbita
 
-// Componenti per l'effetto Saturno
-interface SaturnRingProps {
-  angle: number;
-  scale: number;
-  opacity: number;
-  rotationSpeed: number;
-  isActive: boolean;
-}
+  return keyframes`
+    0% {
+      transform: rotate(${currentAngle}deg) translateX(${orbitRadius}px) rotate(-${currentAngle}deg);
+      opacity: 0.9;
+      filter: blur(0) brightness(1);
+    }
+    30% {
+      transform: rotate(${currentAngle + 45}deg) translateX(${orbitRadius * 0.7}px) rotate(-${currentAngle + 45}deg);
+      opacity: 0.95;
+    }
+    60% {
+      transform: rotate(${currentAngle + 90}deg) translateX(${orbitRadius * 0.4}px) rotate(-${currentAngle + 90}deg);
+      opacity: 1;
+      filter: blur(0) brightness(1.2);
+    }
+    85% {
+      transform: rotate(${currentAngle + 120}deg) translateX(${orbitRadius * 0.15}px) rotate(-${currentAngle + 120}deg);
+      opacity: 0.9;
+    }
+    100% {
+      transform: rotate(${currentAngle + 135}deg) translateX(0) rotate(-${currentAngle + 135}deg) scale(0.5);
+      opacity: 0;
+      filter: blur(8px) brightness(2);
+    }
+  `;
+};
 
-const SaturnRing = styled.div<SaturnRingProps>`
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  top: 0;
-  left: 0;
-  border-radius: 50%;
-  transform: ${props => `rotateX(${props.angle}deg) scale(${props.scale})`};
-  opacity: ${props => props.isActive ? props.opacity : 0};
-  transition: opacity 0.8s ease-in-out;
-  transform-style: preserve-3d;
-  animation: ${props => props.isActive ? `ring-rotation ${props.rotationSpeed}s linear infinite` : 'none'};
-  pointer-events: none;
-  
-  &::after {
-    content: '';
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 0 20px rgba(70, 130, 180, 0.5), inset 0 0 20px rgba(255, 255, 255, 0.3);
-  }
-`;
-
-// Componente per i piccoli loghi che orbitano
-interface OrbitalLogoProps {
-  logoSrc: string;
-  orbit: number;
-  size: number;
-  speedMultiplier: number;
-  startAngle: number;
-  verticalOffset: number;
-  isActive: boolean;
-  orbitOpacity: number;
-  glitchFrequency: number;
-  disappearDelay: number;
-}
-
-const OrbitalLogo = styled.div<OrbitalLogoProps>`
+const OrbitalLogoElement = styled.div<OrbitalLogoProps>`
   position: absolute;
   width: ${props => props.size}px;
   height: ${props => props.size}px;
-  top: calc(50% - ${props => props.size / 2}px + ${props => props.verticalOffset}px);
+  top: calc(50% - ${props => props.size / 2}px);
   left: calc(50% - ${props => props.size / 2}px);
-  background-image: url(${props => props.logoSrc});
+  background-image: url(${blendLogo});
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
-  opacity: ${props => props.isActive ? 1 : 0};
-  transition: opacity 0.5s ease-in-out;
-  filter: brightness(1.5) contrast(1.3) drop-shadow(0 0 10px rgba(70, 130, 180, 0.7));
-  mix-blend-mode: screen;
+  opacity: 0;
+  filter: brightness(1.3) contrast(1.1) drop-shadow(0 0 8px rgba(135, 206, 235, 0.6));
   transform-origin: center center;
-  animation: ${props => props.isActive 
-    ? `orbital-motion-${props.orbit} ${12 / props.speedMultiplier}s linear infinite, 
-       orbital-pulse ${props.glitchFrequency}s ease-in-out infinite,
-       fade-out ${10 + props.disappearDelay}s ${props.disappearDelay}s cubic-bezier(0.42, 0, 0.58, 1) forwards`
-    : 'none'};
-  animation-delay: ${_props => _props.startAngle * 0.1}s, 0s, 0s;
-  z-index: ${_props => Math.round(_props.orbit * 10)};
-  
-  @keyframes orbital-motion-${_props => _props.orbit} {
-    0% {
-      transform: rotate(${_props => _props.startAngle}deg) 
-                translateY(${_props => _props.orbit}px) 
-                rotate(-${_props => _props.startAngle}deg);
+  z-index: ${props => 5 - props.index};
+
+  ${props => {
+    switch (props.animationPhase) {
+      case 'orbit':
+        return css`
+          animation: ${getOrbitAnimation(props)} ${8 / props.speed}s linear forwards;
+        `;
+      case 'converge':
+        return css`
+          animation: ${getConvergeAnimation(props)} 2.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        `;
+      case 'dissolve':
+      case 'hidden':
+        return css`
+          opacity: 0;
+          pointer-events: none;
+        `;
+      default:
+        return '';
     }
-    25% {
-      transform: rotate(${_props => _props.startAngle + 90}deg) 
-                translateY(${_props => _props.orbit}px) 
-                rotate(-${_props => _props.startAngle + 90}deg)
-                scale(${_props => 0.8 + Math.random() * 0.4});
-    }
-    50% {
-      transform: rotate(${_props => _props.startAngle + 180}deg) 
-                translateY(${_props => _props.orbit}px) 
-                rotate(-${_props => _props.startAngle + 180}deg);
-    }
-    75% {
-      transform: rotate(${_props => _props.startAngle + 270}deg) 
-                translateY(${_props => _props.orbit}px) 
-                rotate(-${_props => _props.startAngle + 270}deg)
-                scale(${_props => 0.9 + Math.random() * 0.2});
-    }
-    100% {
-      transform: rotate(${_props => _props.startAngle + 360}deg) 
-                translateY(${_props => _props.orbit}px) 
-                rotate(-${_props => _props.startAngle + 360}deg);
-    }
-  }
-  
-  @keyframes orbital-pulse {
-    0%, 100% {
-      filter: brightness(1.5) contrast(1.3) drop-shadow(0 0 10px rgba(70, 130, 180, 0.7));
-      opacity: 1;
-    }
-    ${_props => (25 + Math.random() * 10).toFixed(1)}% {
-      filter: brightness(0.2) contrast(0.5) drop-shadow(0 0 5px rgba(70, 130, 180, 0.2));
-      opacity: 0.3;
-      transform: scale(0.8) rotate(${Math.random() * 20 - 10}deg);
-    }
-    ${_props => (30 + Math.random() * 5).toFixed(1)}% {
-      filter: brightness(1.8) contrast(1.5) drop-shadow(0 0 15px rgba(255, 255, 255, 0.8));
-      opacity: 1;
-      transform: scale(1.2) rotate(0deg);
-    }
-    ${_props => (60 + Math.random() * 10).toFixed(1)}% {
-      filter: brightness(0.5) contrast(0.8) drop-shadow(0 0 3px rgba(70, 130, 180, 0.5));
-      opacity: 0.5;
-    }
-    ${_props => (65 + Math.random() * 5).toFixed(1)}% {
-      filter: brightness(1.7) contrast(1.4) drop-shadow(0 0 12px rgba(255, 255, 255, 0.7));
-      opacity: 1;
-    }
-  }
-  
-  @keyframes fade-out {
-    0% { 
-      opacity: 1; 
-      filter: brightness(1.5) contrast(1.3) drop-shadow(0 0 10px rgba(70, 130, 180, 0.7));
-    }
-    80% { 
-      opacity: 0.8; 
-      filter: brightness(1.5) contrast(1.3) drop-shadow(0 0 10px rgba(70, 130, 180, 0.7));
-    }
-    90% { 
-      opacity: 0.3; 
-      filter: brightness(1.2) contrast(1) drop-shadow(0 0 5px rgba(70, 130, 180, 0.3));
-      transform: scale(0.8);
-    }
-    100% { 
-      opacity: 0; 
-      filter: brightness(0.5) contrast(0.5) drop-shadow(0 0 0 transparent);
-      transform: scale(0.2) translateY(50px);
-    }
+  }}
+`;
+
+// ============================================================================
+// STYLED COMPONENTS - Navigation Buttons
+// ============================================================================
+
+const NavigationContainer = styled.nav`
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 2rem;
+  padding: 0 20px;
+
+  @media (max-width: 600px) {
+    gap: 15px;
   }
 `;
 
-// Componente per creare l'effetto visuale degli anelli di Saturno
-const SaturnRingEffect = styled.div<{isActive: boolean}>`
-  position: absolute;
-  width: 500px;
-  height: 200px;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-  z-index: 0;
+interface NavButtonProps {
+  isActive: boolean;
+  isPulsing: boolean;
+}
+
+const NavButtonWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+`;
+
+const NavButton = styled.button<NavButtonProps>`
+  position: relative;
+  padding: 14px 32px;
+  background: transparent;
+  border: 1px solid rgba(135, 206, 235, ${props => props.isActive ? 0.8 : 0.25});
+  color: rgba(255, 255, 255, ${props => props.isActive ? 1 : 0.7});
+  font-family: 'Montserrat', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
-  clip-path: ellipse(250px 100px at center);
-  
+
+  ${props => props.isActive && css`
+    background: rgba(135, 206, 235, 0.08);
+    animation: ${pulseGlow} 2s ease-in-out infinite;
+  `}
+
+  /* Effetto bordo luminoso */
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border: 1px solid transparent;
+    background: linear-gradient(135deg,
+      rgba(135, 206, 235, 0.3) 0%,
+      transparent 50%,
+      rgba(70, 130, 180, 0.3) 100%
+    ) border-box;
+    -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: ${props => props.isActive ? 1 : 0};
+    transition: opacity 0.4s ease;
+  }
+
+  /* Effetto hover glow interno */
   &::after {
     content: '';
     position: absolute;
-    width: 100%;
-    height: 100%;
-    top: 0;
-    left: 0;
-    background: radial-gradient(
-      ellipse at center,
-      transparent 40%,
-      rgba(70, 130, 180, 0.2) 42%,
-      rgba(255, 255, 255, 0.3) 50%,
-      rgba(70, 130, 180, 0.2) 58%,
-      transparent 60%
-    );
-    opacity: ${props => props.isActive ? 0.4 : 0};
-    transition: opacity 1.5s ease-in-out;
-    box-shadow: 0 0 40px rgba(70, 130, 180, 0.4);
-    filter: blur(3px);
-    animation: ${props => props.isActive ? 'ring-pulse 8s ease-in-out infinite, ring-fade 12s ease-in-out forwards' : 'none'};
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: radial-gradient(circle, rgba(135, 206, 235, 0.15) 0%, transparent 70%);
+    transform: translate(-50%, -50%);
+    transition: width 0.5s ease, height 0.5s ease;
+    pointer-events: none;
   }
-  
-  @keyframes ring-pulse {
-    0%, 100% { 
-      opacity: 0.4;
-    }
-    50% { 
-      opacity: 0.6;
-    }
-  }
-  
-  @keyframes ring-fade {
-    0% { opacity: 0; }
-    10% { opacity: 0.4; }
-    90% { opacity: 0.4; }
-    100% { opacity: 0; }
-  }
-`;
-
-const CTAButton = styled(Link)`
-  position: absolute;
-  bottom: 10%;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 15px 40px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  color: white;
-  border-radius: 30px;
-  text-decoration: none;
-  font-weight: 600;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  backdrop-filter: blur(10px);
-  transition: all 0.3s ease;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
 
   &:hover {
-    background: rgba(255, 255, 255, 0.2);
-    transform: translateX(-50%) translateY(-5px);
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+    border-color: rgba(135, 206, 235, 0.6);
+    color: rgba(255, 255, 255, 1);
+    transform: translateY(-2px);
+
+    &::before {
+      opacity: 1;
+    }
+
+    &::after {
+      width: 200%;
+      height: 200%;
+    }
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  @media (max-width: 480px) {
+    padding: 12px 24px;
+    font-size: 10px;
+    letter-spacing: 2px;
   }
 `;
 
-// Particles effect
-const Particles = styled.div`
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 2;
+// ============================================================================
+// STYLED COMPONENTS - Ignition Indicator (Effetto Accensione)
+// ============================================================================
+
+interface IgnitionProps {
+  isLit: boolean;
+}
+
+const IgnitionIndicator = styled.div<IgnitionProps>`
+  position: relative;
+  width: 40px;
+  height: 6px;
+  background: rgba(20, 20, 20, 0.8);
+  border-radius: 3px;
   overflow: hidden;
-  opacity: 0.5;
-  
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  /* Bordo sottile */
+  border: 1px solid rgba(135, 206, 235, ${props => props.isLit ? 0.4 : 0.15});
+
+  /* Core luminoso */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: ${props => props.isLit ? '70%' : '20%'};
+    height: 2px;
+    background: ${props => props.isLit
+      ? 'linear-gradient(90deg, rgba(135, 206, 235, 0.6), rgba(255, 255, 255, 0.9), rgba(135, 206, 235, 0.6))'
+      : 'rgba(135, 206, 235, 0.2)'
+    };
+    border-radius: 1px;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    ${props => props.isLit && css`
+      animation: ${igniteGlow} 1.5s ease-in-out infinite;
+    `}
+  }
+
+  /* Riflesso superiore */
   &::after {
     content: '';
     position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background-image: 
-      radial-gradient(1px 1px at 25px 5px, white, rgba(255, 255, 255, 0)),
-      radial-gradient(1px 1px at 50px 25px, white, rgba(255, 255, 255, 0)),
-      radial-gradient(1px 1px at 125px 20px, white, rgba(255, 255, 255, 0)),
-      radial-gradient(1.5px 1.5px at 50px 75px, white, rgba(255, 255, 255, 0)),
-      radial-gradient(2px 2px at 175px 135px, white, rgba(255, 255, 255, 0)),
-      radial-gradient(2.5px 2.5px at 200px 50px, white, rgba(255, 255, 255, 0)),
-      radial-gradient(2px 2px at 250px 225px, white, rgba(255, 255, 255, 0));
-    background-repeat: repeat;
-    background-size: 350px 350px;
+    top: 0;
+    left: 10%;
+    width: 80%;
+    height: 1px;
+    background: linear-gradient(90deg,
+      transparent,
+      rgba(255, 255, 255, ${props => props.isLit ? 0.3 : 0.1}),
+      transparent
+    );
+  }
+
+  &:hover {
+    transform: scale(1.05);
+    border-color: rgba(135, 206, 235, 0.5);
   }
 `;
 
-// Configurazione degli anelli e satelliti
-interface Ring {
-  angle: number;
-  scale: number;
-  opacity: number;
-  rotationSpeed: number;
+// Etichetta sotto l'indicatore
+const IgnitionLabel = styled.span<IgnitionProps>`
+  font-family: 'Montserrat', sans-serif;
+  font-size: 8px;
+  font-weight: 400;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(135, 206, 235, ${props => props.isLit ? 0.8 : 0.4});
+  transition: color 0.3s ease;
+  margin-top: 4px;
+`;
+
+// ============================================================================
+// COMPONENT
+// ============================================================================
+
+interface NavigationItem {
+  id: string;
+  label: string;
+  path: string;
 }
 
-interface Satellite {
-  orbit: number;
+const navigationItems: NavigationItem[] = [
+  { id: 'eventi', label: 'Eventi', path: '/eventi' },
+  { id: 'galleria', label: 'Galleria', path: '/galleria' },
+  { id: 'chi-siamo', label: 'Chi Siamo', path: '/chi-siamo' },
+];
+
+interface OrbitalConfig {
+  orbitRadius: number;
   size: number;
-  speedMultiplier: number;
-  startAngle: number;
-  verticalOffset: number;
-  glitchFrequency: number;
-  disappearDelay: number;
+  speed: number;
+  initialAngle: number;
 }
+
+const orbitalConfigs: OrbitalConfig[] = [
+  { orbitRadius: 130, size: 35, speed: 1.2, initialAngle: 0 },
+  { orbitRadius: 145, size: 28, speed: 0.9, initialAngle: 72 },
+  { orbitRadius: 125, size: 32, speed: 1.0, initialAngle: 144 },
+  { orbitRadius: 140, size: 30, speed: 1.1, initialAngle: 216 },
+  { orbitRadius: 135, size: 26, speed: 0.85, initialAngle: 288 },
+];
 
 const HomePage: React.FC = () => {
-  // Suddivido la scritta in due parole per una migliore animazione
-  const firstWord = "Blend";
-  const secondWord = "Association";
-  
-  // Funzione per determinare il tipo di effetto per ogni lettera
-  const getEffectType = (wordPosition: string, letterIndex: number): 'teleport' | 'flicker' | 'normal' => {
-    // Lettere specifiche che avranno effetti speciali
-    if (wordPosition === 'first') {
-      // Per la parola "Blend"
-      if (letterIndex === 0) return 'teleport'; // B
-      if (letterIndex === 2) return 'flicker';  // e
-      return 'normal';
-    } else {
-      // Per la parola "Association"
-      if (letterIndex === 1) return 'flicker';  // s
-      if (letterIndex === 4) return 'teleport'; // c
-      if (letterIndex === 7) return 'flicker';  // i
-      if (letterIndex === 9) return 'teleport'; // o
-      return 'normal';
-    }
-  };
-  
-  // Stato per gli effetti di glitch
-  const [shouldGlitch, setShouldGlitch] = useState<boolean>(false);
-  const [saturnEffectActive, setSaturnEffectActive] = useState<boolean>(false);
-  
-  // Riferimento per effetti di timeouts multipli
-  const timeoutsRef = useRef<NodeJS.Timeout[]>([]);
-  
-  // Configurazione per gli anelli di Saturno
-  const rings: Ring[] = [
-    { angle: 75, scale: 1.2, opacity: 0.7, rotationSpeed: 60 },
-    { angle: 75, scale: 1.4, opacity: 0.5, rotationSpeed: 80 },
-    { angle: 75, scale: 1.6, opacity: 0.3, rotationSpeed: 100 }
-  ];
-  
-  // Configurazione per i satelliti (loghi orbitanti)
-  const satellites: Satellite[] = [
-    { orbit: 140, size: 60, speedMultiplier: 0.8, startAngle: 0, verticalOffset: 0, glitchFrequency: 3, disappearDelay: 2 },
-    { orbit: 180, size: 80, speedMultiplier: 0.6, startAngle: 120, verticalOffset: 10, glitchFrequency: 4, disappearDelay: 4 },
-    { orbit: 220, size: 70, speedMultiplier: 0.7, startAngle: 240, verticalOffset: -15, glitchFrequency: 5, disappearDelay: 1 },
-    { orbit: 160, size: 50, speedMultiplier: 0.9, startAngle: 60, verticalOffset: -5, glitchFrequency: 2.5, disappearDelay: 3 },
-    { orbit: 200, size: 65, speedMultiplier: 0.5, startAngle: 180, verticalOffset: 5, glitchFrequency: 3.5, disappearDelay: 5 },
-    { orbit: 240, size: 55, speedMultiplier: 0.4, startAngle: 300, verticalOffset: -10, glitchFrequency: 4.5, disappearDelay: 2.5 }
-  ];
-  
-  // Funzione per attivare e disattivare l'effetto Saturno
-  const triggerSaturnEffect = () => {
-    // Disattiva eventuali timeouts precedenti
-    timeoutsRef.current.forEach(timeout => clearTimeout(timeout));
-    timeoutsRef.current = [];
-    
-    // Attiva l'effetto
-    setSaturnEffectActive(true);
-    
-    // Disattiva l'effetto dopo un certo tempo
-    const timeout = setTimeout(() => {
-      setSaturnEffectActive(false);
-    }, 12000); // 12 secondi, corrispondenti alla durata dell'animazione
-    
-    timeoutsRef.current.push(timeout);
-  };
-  
+  const navigate = useNavigate();
+  const title = "Blend Association";
+
+  // Stati per animazioni
+  const [orbitalPhase, setOrbitalPhase] = useState<'orbit' | 'converge' | 'dissolve' | 'hidden'>('orbit');
+  const [activeButtons, setActiveButtons] = useState<Set<string>>(new Set());
+  const [pulsingButton, setPulsingButton] = useState<string | null>(null);
+
+  // Ref per gestire i timeout
+  const animationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Gestione fasi animazione orbitale (una volta sola)
   useEffect(() => {
-    // Attiva l'effetto Saturno dopo un breve ritardo iniziale
-    const initialTimeout = setTimeout(() => {
-      triggerSaturnEffect();
-    }, 2000);
-    
-    timeoutsRef.current.push(initialTimeout);
-    
-    // Imposta un timer per attivare l'effetto glitch in modo casuale
-    const glitchInterval = setInterval(() => {
-      if (Math.random() > 0.65) { // 35% di probabilità di attivare il glitch
-        setShouldGlitch(true);
-        setTimeout(() => setShouldGlitch(false), 200); // Durata del glitch principale
-        
-        // 20% di probabilità di attivare anche l'effetto Saturno dopo un glitch
-        if (Math.random() > 0.8 && !saturnEffectActive) {
-          setTimeout(() => triggerSaturnEffect(), 300);
-        }
-      }
-    }, 5000); // Controlla ogni 5 secondi
-    
-    // Cleanup
+    // Fase 1: Orbita per 6 secondi
+    animationTimeoutRef.current = setTimeout(() => {
+      setOrbitalPhase('converge');
+
+      // Fase 2: Convergenza per 2.5 secondi, poi dissolve
+      animationTimeoutRef.current = setTimeout(() => {
+        setOrbitalPhase('hidden');
+      }, 2500);
+    }, 6000);
+
     return () => {
-      clearInterval(glitchInterval);
-      timeoutsRef.current.forEach(timeout => clearTimeout(timeout));
+      if (animationTimeoutRef.current) {
+        clearTimeout(animationTimeoutRef.current);
+      }
     };
-  }, [saturnEffectActive]);
-  
+  }, []);
+
+  // Handler per i pulsanti
+  const handleButtonClick = useCallback((item: NavigationItem) => {
+    // Attiva l'indicatore
+    setActiveButtons(prev => new Set(prev).add(item.id));
+    setPulsingButton(item.id);
+
+    // Naviga dopo un breve delay per l'effetto visivo
+    setTimeout(() => {
+      navigate(item.path);
+    }, 300);
+  }, [navigate]);
+
+  // Toggle indicatore accensione
+  const handleIgnitionToggle = useCallback((itemId: string) => {
+    setActiveButtons(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(itemId)) {
+        newSet.delete(itemId);
+      } else {
+        newSet.add(itemId);
+      }
+      return newSet;
+    });
+  }, []);
+
   return (
     <PageContainer>
-      <Particles />
-      
-      {/* Header separato */}
-      <Header showLogo={false} />
+      <ParticleField />
 
-      <LogoContainer>
-        {/* Componente di testo con effetto glitch avanzato e finale sci-fi */}
-        <GlitchText>
-          {/* Animazione della prima parola con effetti differenziati */}
-          {firstWord.split('').map((letter, index) => (
-            <GlitchLetter 
-              key={`first-${index}`} 
-              delay={index * 0.07}
-              effectType={getEffectType('first', index)}
+      <MainContent>
+        {/* Titolo animato */}
+        <TitleContainer>
+          {title.split('').map((letter, index) => (
+            <AnimatedLetter
+              key={index}
+              delay={0.5 + index * 0.05}
             >
-              {letter}
-            </GlitchLetter>
+              {letter === ' ' ? '\u00A0' : letter}
+            </AnimatedLetter>
           ))}
-          {/* Spazio */}
-          <GlitchLetter key="space" delay={firstWord.length * 0.07 + 0.1} effectType="normal">&nbsp;</GlitchLetter>
-          {/* Animazione della seconda parola con effetti differenziati */}
-          {secondWord.split('').map((letter, index) => (
-            <GlitchLetter 
-              key={`second-${index}`} 
-              delay={(firstWord.length + 1) * 0.07 + (index * 0.07)}
-              effectType={getEffectType('second', index)}
-            >
-              {letter}
-            </GlitchLetter>
-          ))}
-        </GlitchText>
-        
-        {/* Wrapper per il logo e gli elementi di Saturno */}
-        <div style={{ position: 'relative' }}>
-          {/* Effetto anelli di Saturno - CONDIZIONALE */}
-          {saturnEffectActive && <SaturnRingEffect isActive={saturnEffectActive} />}
-          
-          {/* Anelli orbitali di Saturno */}
-          <SaturnRingContainer>
-            {rings.map((ring, index) => (
-              <SaturnRing 
-                key={`ring-${index}`}
-                angle={ring.angle}
-                scale={ring.scale}
-                opacity={ring.opacity}
-                rotationSpeed={ring.rotationSpeed}
-                isActive={saturnEffectActive}
-              />
-            ))}
-            
-            {/* Loghi che orbitano come satelliti */}
-            {satellites.map((satellite, index) => (
-              <OrbitalLogo
-                key={`satellite-${index}`}
-                logoSrc={blendLogo}
-                orbit={satellite.orbit}
-                size={satellite.size}
-                speedMultiplier={satellite.speedMultiplier}
-                startAngle={satellite.startAngle}
-                verticalOffset={satellite.verticalOffset}
-                isActive={saturnEffectActive}
-                orbitOpacity={0.7 - (index * 0.1)}
-                glitchFrequency={satellite.glitchFrequency}
-                disappearDelay={satellite.disappearDelay}
-              />
-            ))}
-          </SaturnRingContainer>
-          
-          {/* Logo principale con effetto glitch */}
-          <div style={{ width: '300px', height: '300px', position: 'relative', margin: '10px 0 20px' }}>
-            <GlitchLogo 
-              src={blendLogo} 
-              style={shouldGlitch ? { 
-                transform: `translate(${Math.random() * 10 - 5}px, ${Math.random() * 10 - 5}px) skew(${Math.random() * 4 - 2}deg)`,
-                filter: `hue-rotate(${Math.random() * 60}deg) brightness(${1 + Math.random() * 0.5})`
-              } : {}}
+        </TitleContainer>
+
+        {/* Sistema Logo con orbite */}
+        <LogoSystemContainer>
+          {/* Loghi orbitanti */}
+          {orbitalConfigs.map((config, index) => (
+            <OrbitalLogoElement
+              key={index}
+              index={index}
+              totalLogos={orbitalConfigs.length}
+              animationPhase={orbitalPhase}
+              orbitRadius={config.orbitRadius}
+              size={config.size}
+              speed={config.speed}
+              initialAngle={config.initialAngle}
             />
-          </div>
-        </div>
-        <CTAButton to="/eventi">Scopri gli Eventi</CTAButton>
-      </LogoContainer>
+          ))}
+
+          {/* Logo centrale */}
+          <CentralLogo src={blendLogo} />
+        </LogoSystemContainer>
+
+        {/* Navigazione con effetto accensione */}
+        <NavigationContainer>
+          {navigationItems.map((item) => {
+            const isActive = activeButtons.has(item.id);
+            const isPulsing = pulsingButton === item.id;
+
+            return (
+              <NavButtonWrapper key={item.id}>
+                <NavButton
+                  isActive={isActive}
+                  isPulsing={isPulsing}
+                  onClick={() => handleButtonClick(item)}
+                >
+                  {item.label}
+                </NavButton>
+
+                {/* Indicatore di accensione */}
+                <IgnitionIndicator
+                  isLit={isActive}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleIgnitionToggle(item.id);
+                  }}
+                />
+                <IgnitionLabel isLit={isActive}>
+                  {isActive ? 'on' : 'off'}
+                </IgnitionLabel>
+              </NavButtonWrapper>
+            );
+          })}
+        </NavigationContainer>
+      </MainContent>
     </PageContainer>
   );
 };
