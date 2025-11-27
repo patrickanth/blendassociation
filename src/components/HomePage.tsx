@@ -54,28 +54,6 @@ const textReveal = keyframes`
   }
 `;
 
-const pulseGlow = keyframes`
-  0%, 100% {
-    box-shadow: 0 0 5px rgba(135, 206, 235, 0.3),
-                0 0 10px rgba(135, 206, 235, 0.2);
-  }
-  50% {
-    box-shadow: 0 0 10px rgba(135, 206, 235, 0.5),
-                0 0 20px rgba(135, 206, 235, 0.3);
-  }
-`;
-
-const igniteGlow = keyframes`
-  0% { opacity: 0.3; }
-  50% { opacity: 1; }
-  100% { opacity: 0.6; }
-`;
-
-const planetOrbit = keyframes`
-  0% { transform: rotate(0deg) translateX(var(--orbit-radius)) rotate(0deg); }
-  100% { transform: rotate(360deg) translateX(var(--orbit-radius)) rotate(-360deg); }
-`;
-
 // Slow, smooth planet rotation (no opacity change)
 const slowRotate = keyframes`
   0% { transform: rotate(0deg); }
@@ -649,139 +627,97 @@ const OrbitalLogoElement = styled.div<OrbitalLogoProps>`
 `;
 
 // ============================================================================
-// STYLED COMPONENTS - Navigation
+// STYLED COMPONENTS - Navigation (Elegant minimal design)
 // ============================================================================
 
 const NavigationContainer = styled.nav`
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 20px;
-  margin-top: 2rem;
+  gap: 8px;
+  margin-top: 3rem;
   padding: 0 20px;
 
-  @media (max-width: 600px) {
-    gap: 15px;
+  @media (max-width: 768px) {
+    gap: 6px;
+    margin-top: 2rem;
   }
 `;
 
-const NavButtonWrapper = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-`;
-
-const NavButton = styled.button<{ $isActive: boolean; $isPulsing: boolean }>`
+const NavLink = styled.button<{ $index: number }>`
   position: relative;
-  padding: 14px 32px;
+  padding: 12px 24px;
   background: transparent;
-  border: 1px solid rgba(135, 206, 235, ${props => props.$isActive ? 0.8 : 0.25});
-  color: rgba(255, 255, 255, ${props => props.$isActive ? 1 : 0.7});
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
   font-family: 'Montserrat', sans-serif;
   font-size: 11px;
-  font-weight: 500;
+  font-weight: 400;
   letter-spacing: 3px;
   text-transform: uppercase;
   cursor: pointer;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  overflow: hidden;
-
-  ${props => props.$isActive && css`
-    background: rgba(135, 206, 235, 0.08);
-    animation: ${pulseGlow} 2s ease-in-out infinite;
-  `}
+  opacity: 0;
+  animation: ${fadeIn} 0.6s ease forwards;
+  animation-delay: ${props => 1.5 + props.$index * 0.1}s;
 
   &::before {
     content: '';
     position: absolute;
-    inset: 0;
-    border: 1px solid transparent;
-    background: linear-gradient(135deg,
-      rgba(135, 206, 235, 0.3) 0%,
-      transparent 50%,
-      rgba(70, 130, 180, 0.3) 100%
-    ) border-box;
-    -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    opacity: ${props => props.$isActive ? 1 : 0};
-    transition: opacity 0.4s ease;
+    bottom: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(135, 206, 235, 0.6), transparent);
+    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   &::after {
     content: '';
     position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    background: radial-gradient(circle, rgba(135, 206, 235, 0.15) 0%, transparent 70%);
-    transform: translate(-50%, -50%);
-    transition: width 0.5s ease, height 0.5s ease;
-    pointer-events: none;
+    inset: 0;
+    background: radial-gradient(circle at center, rgba(135, 206, 235, 0.08) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.4s ease;
   }
 
   &:hover {
-    border-color: rgba(135, 206, 235, 0.6);
-    color: rgba(255, 255, 255, 1);
-    transform: translateY(-2px);
+    color: rgba(255, 255, 255, 0.95);
 
-    &::before { opacity: 1; }
-    &::after { width: 200%; height: 200%; }
+    &::before {
+      width: 60%;
+    }
+
+    &::after {
+      opacity: 1;
+    }
   }
 
-  @media (max-width: 480px) {
-    padding: 12px 24px;
-    font-size: 10px;
-  }
-`;
-
-const IgnitionIndicator = styled.div<{ $isLit: boolean }>`
-  position: relative;
-  width: 40px;
-  height: 6px;
-  background: rgba(20, 20, 20, 0.8);
-  border-radius: 3px;
-  overflow: hidden;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  border: 1px solid rgba(135, 206, 235, ${props => props.$isLit ? 0.4 : 0.15});
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: ${props => props.$isLit ? '70%' : '20%'};
-    height: 2px;
-    background: ${props => props.$isLit
-      ? 'linear-gradient(90deg, rgba(135, 206, 235, 0.6), rgba(255, 255, 255, 0.9), rgba(135, 206, 235, 0.6))'
-      : 'rgba(135, 206, 235, 0.2)'
-    };
-    border-radius: 1px;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    ${props => props.$isLit && css`
-      animation: ${igniteGlow} 1.5s ease-in-out infinite;
-    `}
+  &:active {
+    transform: scale(0.98);
   }
 
-  &:hover {
-    transform: scale(1.05);
-    border-color: rgba(135, 206, 235, 0.5);
+  @media (max-width: 768px) {
+    padding: 10px 16px;
+    font-size: 9px;
+    letter-spacing: 2px;
   }
 `;
 
-const IgnitionLabel = styled.span<{ $isLit: boolean }>`
-  font-family: 'Montserrat', sans-serif;
+const NavDivider = styled.span<{ $index: number }>`
+  display: flex;
+  align-items: center;
+  color: rgba(135, 206, 235, 0.15);
   font-size: 8px;
-  font-weight: 400;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  color: rgba(135, 206, 235, ${props => props.$isLit ? 0.8 : 0.4});
-  transition: color 0.3s ease;
-  margin-top: 4px;
+  opacity: 0;
+  animation: ${fadeIn} 0.6s ease forwards;
+  animation-delay: ${props => 1.55 + props.$index * 0.1}s;
+  user-select: none;
+
+  @media (max-width: 768px) {
+    display: none;
+  }
 `;
 
 // ============================================================================
@@ -797,6 +733,8 @@ interface NavigationItem {
 const navigationItems: NavigationItem[] = [
   { id: 'eventi', label: 'Eventi', path: '/eventi' },
   { id: 'galleria', label: 'Galleria', path: '/galleria' },
+  { id: 'label', label: 'Label', path: '/label' },
+  { id: 'merch', label: 'Merch', path: '/merch' },
   { id: 'chi-siamo', label: 'Chi Siamo', path: '/chi-siamo' },
 ];
 
@@ -820,8 +758,6 @@ const HomePage: React.FC = () => {
   const title = "Blend Association";
 
   const [orbitalPhase, setOrbitalPhase] = useState<'orbit' | 'converge' | 'dissolve' | 'hidden'>('orbit');
-  const [activeButtons, setActiveButtons] = useState<Set<string>>(new Set());
-  const [pulsingButton, setPulsingButton] = useState<string | null>(null);
 
   const animationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -840,23 +776,9 @@ const HomePage: React.FC = () => {
     };
   }, []);
 
-  const handleButtonClick = useCallback((item: NavigationItem) => {
-    setActiveButtons(prev => new Set(prev).add(item.id));
-    setPulsingButton(item.id);
-    setTimeout(() => navigate(item.path), 300);
+  const handleNavClick = useCallback((path: string) => {
+    navigate(path);
   }, [navigate]);
-
-  const handleIgnitionToggle = useCallback((itemId: string) => {
-    setActiveButtons(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(itemId)) {
-        newSet.delete(itemId);
-      } else {
-        newSet.add(itemId);
-      }
-      return newSet;
-    });
-  }, []);
 
   return (
     <PageContainer>
@@ -935,32 +857,19 @@ const HomePage: React.FC = () => {
         </LogoSystemContainer>
 
         <NavigationContainer>
-          {navigationItems.map((item) => {
-            const isActive = activeButtons.has(item.id);
-            const isPulsing = pulsingButton === item.id;
-
-            return (
-              <NavButtonWrapper key={item.id}>
-                <NavButton
-                  $isActive={isActive}
-                  $isPulsing={isPulsing}
-                  onClick={() => handleButtonClick(item)}
-                >
-                  {item.label}
-                </NavButton>
-                <IgnitionIndicator
-                  $isLit={isActive}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleIgnitionToggle(item.id);
-                  }}
-                />
-                <IgnitionLabel $isLit={isActive}>
-                  {isActive ? 'on' : 'off'}
-                </IgnitionLabel>
-              </NavButtonWrapper>
-            );
-          })}
+          {navigationItems.map((item, index) => (
+            <React.Fragment key={item.id}>
+              <NavLink
+                $index={index}
+                onClick={() => handleNavClick(item.path)}
+              >
+                {item.label}
+              </NavLink>
+              {index < navigationItems.length - 1 && (
+                <NavDivider $index={index}>·</NavDivider>
+              )}
+            </React.Fragment>
+          ))}
         </NavigationContainer>
       </MainContent>
     </PageContainer>
