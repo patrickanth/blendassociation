@@ -76,34 +76,38 @@ const planetOrbit = keyframes`
   100% { transform: rotate(360deg) translateX(var(--orbit-radius)) rotate(-360deg); }
 `;
 
-const celestialDrift = keyframes`
+// Slow, smooth planet rotation (no opacity change)
+const slowRotate = keyframes`
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+`;
+
+// Very subtle floating movement
+const gentleFloat = keyframes`
+  0%, 100% { transform: translateY(0) translateX(0); }
+  50% { transform: translateY(-8px) translateX(4px); }
+`;
+
+// Subtle atmosphere pulse (no opacity change, only glow intensity)
+const atmospherePulse = keyframes`
   0%, 100% {
-    transform: translate(0, 0) scale(1);
-    opacity: 0.15;
+    filter: blur(0px);
+    box-shadow:
+      inset -30px -30px 60px rgba(0, 0, 0, 0.8),
+      0 0 40px rgba(135, 206, 235, 0.08);
   }
-  33% {
-    transform: translate(10px, -15px) scale(1.02);
-    opacity: 0.2;
-  }
-  66% {
-    transform: translate(-5px, 10px) scale(0.98);
-    opacity: 0.12;
+  50% {
+    filter: blur(0px);
+    box-shadow:
+      inset -30px -30px 60px rgba(0, 0, 0, 0.7),
+      0 0 60px rgba(135, 206, 235, 0.12);
   }
 `;
 
-const atmosphereGlow = keyframes`
-  0%, 100% {
-    box-shadow:
-      inset -20px -20px 40px rgba(0, 0, 0, 0.6),
-      inset 10px 10px 30px rgba(135, 206, 235, 0.1),
-      0 0 60px rgba(135, 206, 235, 0.05);
-  }
-  50% {
-    box-shadow:
-      inset -20px -20px 40px rgba(0, 0, 0, 0.5),
-      inset 10px 10px 30px rgba(135, 206, 235, 0.15),
-      0 0 80px rgba(135, 206, 235, 0.08);
-  }
+// Ring rotation
+const ringRotate = keyframes`
+  0% { transform: rotateX(75deg) rotateZ(0deg); }
+  100% { transform: rotateX(75deg) rotateZ(360deg); }
 `;
 
 const lineGlow = keyframes`
@@ -282,69 +286,119 @@ const AmbientText = styled.div<{ $top: string; $left: string; $delay: number; $s
   }
 `;
 
-// Celestial Bodies
-const CelestialContainer = styled.div`
+// ============================================================================
+// CELESTIAL SYSTEM - Sophisticated planet design
+// ============================================================================
+
+const CelestialSystem = styled.div`
   position: absolute;
   inset: 0;
   z-index: 3;
   pointer-events: none;
   overflow: hidden;
+  perspective: 1000px;
 `;
 
-// Main large planet - elegant gas giant style
-const GasGiant = styled.div<{ $size: number; $top: string; $left: string; $hue: number }>`
+// Main planet with rings (Saturn-like) - positioned top-left
+const MainPlanet = styled.div`
   position: absolute;
-  top: ${props => props.$top};
-  left: ${props => props.$left};
-  width: ${props => props.$size}px;
-  height: ${props => props.$size}px;
+  top: 8%;
+  left: -2%;
+  width: 220px;
+  height: 220px;
+  animation: ${gentleFloat} 20s ease-in-out infinite;
+
+  @media (max-width: 768px) {
+    width: 150px;
+    height: 150px;
+    top: 5%;
+    left: -5%;
+  }
+`;
+
+const PlanetBody = styled.div`
+  position: absolute;
+  inset: 0;
   border-radius: 50%;
   background:
-    radial-gradient(
-      ellipse 80% 50% at 30% 20%,
-      hsla(${props => props.$hue}, 30%, 40%, 0.15) 0%,
-      transparent 50%
-    ),
-    radial-gradient(
-      circle at 35% 35%,
-      hsla(${props => props.$hue}, 25%, 25%, 0.3) 0%,
-      hsla(${props => props.$hue}, 20%, 15%, 0.2) 40%,
-      hsla(${props => props.$hue}, 15%, 8%, 0.15) 70%,
-      transparent 100%
-    );
-  animation: ${celestialDrift} ${props => 25 + props.$size / 5}s ease-in-out infinite;
-  animation-delay: ${props => props.$hue / 30}s;
+    radial-gradient(ellipse 100% 50% at 50% 100%, rgba(20, 30, 50, 0.9) 0%, transparent 50%),
+    radial-gradient(ellipse 120% 80% at 30% 20%, rgba(80, 120, 180, 0.15) 0%, transparent 40%),
+    radial-gradient(circle at 35% 35%, rgba(60, 100, 160, 0.4) 0%, rgba(30, 50, 90, 0.3) 30%, rgba(15, 25, 50, 0.5) 60%, rgba(5, 10, 20, 0.8) 100%);
+  box-shadow:
+    inset -40px -20px 60px rgba(0, 0, 0, 0.8),
+    inset 20px 20px 40px rgba(135, 206, 235, 0.05),
+    0 0 80px rgba(70, 100, 150, 0.15),
+    0 0 120px rgba(50, 80, 130, 0.08);
+  animation: ${atmospherePulse} 12s ease-in-out infinite;
 
   &::before {
     content: '';
     position: absolute;
-    inset: 5%;
+    top: 15%;
+    left: 20%;
+    width: 60%;
+    height: 8%;
+    background: linear-gradient(90deg, transparent, rgba(100, 150, 200, 0.08), rgba(135, 206, 235, 0.05), transparent);
     border-radius: 50%;
-    background:
-      linear-gradient(
-        135deg,
-        transparent 0%,
-        hsla(${props => props.$hue}, 40%, 60%, 0.03) 40%,
-        transparent 60%
-      );
-    animation: ${atmosphereGlow} ${props => 8 + props.$size / 20}s ease-in-out infinite;
+    filter: blur(2px);
   }
 
   &::after {
     content: '';
     position: absolute;
-    inset: -5%;
+    top: 35%;
+    left: 15%;
+    width: 70%;
+    height: 5%;
+    background: linear-gradient(90deg, transparent, rgba(80, 120, 170, 0.06), transparent);
     border-radius: 50%;
-    background: radial-gradient(
-      circle at 30% 30%,
-      hsla(${props => props.$hue}, 50%, 70%, 0.04) 0%,
-      transparent 50%
-    );
+    filter: blur(1px);
   }
 `;
 
-// Small distant moons
-const CelestialMoon = styled.div<{ $size: number; $top: string; $right: string; $hue: number }>`
+// Saturn-like ring system
+const RingSystem = styled.div`
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 320px;
+  height: 320px;
+  margin: -160px;
+  transform-style: preserve-3d;
+  animation: ${ringRotate} 120s linear infinite;
+
+  @media (max-width: 768px) {
+    width: 220px;
+    height: 220px;
+    margin: -110px;
+  }
+`;
+
+const Ring = styled.div<{ $index: number }>`
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: ${props => 280 + props.$index * 25}px;
+  height: ${props => 280 + props.$index * 25}px;
+  margin-left: ${props => -(280 + props.$index * 25) / 2}px;
+  margin-top: ${props => -(280 + props.$index * 25) / 2}px;
+  border-radius: 50%;
+  border: ${props => props.$index === 0 ? '12px' : props.$index === 1 ? '6px' : '3px'} solid transparent;
+  border-color: rgba(135, 206, 235, ${props => 0.08 - props.$index * 0.02});
+  background: transparent;
+  box-shadow:
+    0 0 ${props => 10 + props.$index * 5}px rgba(135, 206, 235, ${props => 0.03 - props.$index * 0.01});
+
+  @media (max-width: 768px) {
+    width: ${props => 200 + props.$index * 18}px;
+    height: ${props => 200 + props.$index * 18}px;
+    margin-left: ${props => -(200 + props.$index * 18) / 2}px;
+    margin-top: ${props => -(200 + props.$index * 18) / 2}px;
+  }
+`;
+
+// Distant planet - bottom right area
+const DistantPlanet = styled.div<{ $size: number; $top: string; $right: string; $delay: number }>`
   position: absolute;
   top: ${props => props.$top};
   right: ${props => props.$right};
@@ -352,46 +406,60 @@ const CelestialMoon = styled.div<{ $size: number; $top: string; $right: string; 
   height: ${props => props.$size}px;
   border-radius: 50%;
   background: radial-gradient(
-    circle at 40% 40%,
-    hsla(${props => props.$hue}, 20%, 50%, 0.2) 0%,
-    hsla(${props => props.$hue}, 15%, 20%, 0.1) 60%,
-    transparent 100%
+    circle at 35% 35%,
+    rgba(100, 140, 190, 0.25) 0%,
+    rgba(60, 90, 140, 0.15) 40%,
+    rgba(30, 50, 90, 0.2) 70%,
+    rgba(10, 20, 40, 0.25) 100%
   );
   box-shadow:
-    inset -3px -3px 8px rgba(0, 0, 0, 0.4),
-    0 0 ${props => props.$size * 0.5}px hsla(${props => props.$hue}, 30%, 50%, 0.05);
-  animation: ${celestialDrift} ${props => 18 + props.$size}s ease-in-out infinite;
-  animation-delay: ${props => props.$hue / 20}s;
+    inset -${props => props.$size * 0.15}px -${props => props.$size * 0.1}px ${props => props.$size * 0.3}px rgba(0, 0, 0, 0.6),
+    0 0 ${props => props.$size * 0.4}px rgba(100, 150, 200, 0.08);
+  animation: ${gentleFloat} ${props => 25 + props.$delay}s ease-in-out infinite;
+  animation-delay: ${props => props.$delay}s;
 `;
 
-// Orbiting particle
-const OrbitingParticle = styled.div<{ $orbitRadius: number; $size: number; $duration: number; $hue: number }>`
+// Small moon/satellite
+const Moon = styled.div<{ $size: number; $top: string; $left: string; $delay: number }>`
   position: absolute;
-  top: 50%;
-  left: 50%;
+  top: ${props => props.$top};
+  left: ${props => props.$left};
   width: ${props => props.$size}px;
   height: ${props => props.$size}px;
-  margin: ${props => -props.$size / 2}px;
-  --orbit-radius: ${props => props.$orbitRadius}px;
-  animation: ${planetOrbit} ${props => props.$duration}s linear infinite;
-
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: 50%;
-    background: radial-gradient(
-      circle at 40% 40%,
-      hsla(${props => props.$hue}, 50%, 70%, 0.6) 0%,
-      hsla(${props => props.$hue}, 40%, 40%, 0.3) 50%,
-      transparent 100%
-    );
-    box-shadow: 0 0 ${props => props.$size * 2}px hsla(${props => props.$hue}, 50%, 60%, 0.15);
-  }
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 40% 40%,
+    rgba(180, 200, 220, 0.2) 0%,
+    rgba(100, 130, 160, 0.12) 50%,
+    rgba(50, 70, 100, 0.08) 100%
+  );
+  box-shadow:
+    inset -2px -2px 4px rgba(0, 0, 0, 0.3),
+    0 0 ${props => props.$size}px rgba(135, 206, 235, 0.05);
+  animation: ${gentleFloat} ${props => 18 + props.$delay * 2}s ease-in-out infinite;
+  animation-delay: ${props => props.$delay}s;
 `;
 
-// Subtle orbit rings
-const SubtleOrbitRing = styled.div<{ $size: number; $opacity: number }>`
+// Nebula glow in background
+const NebulaGlow = styled.div<{ $top: string; $left: string; $size: number; $hue: number }>`
+  position: absolute;
+  top: ${props => props.$top};
+  left: ${props => props.$left};
+  width: ${props => props.$size}px;
+  height: ${props => props.$size}px;
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse at center,
+    hsla(${props => props.$hue}, 40%, 50%, 0.04) 0%,
+    hsla(${props => props.$hue}, 30%, 40%, 0.02) 40%,
+    transparent 70%
+  );
+  filter: blur(40px);
+  animation: ${gentleFloat} 30s ease-in-out infinite;
+`;
+
+// Orbit path (visible ring around center)
+const OrbitPath = styled.div<{ $size: number; $opacity: number }>`
   position: absolute;
   top: 50%;
   left: 50%;
@@ -400,14 +468,30 @@ const SubtleOrbitRing = styled.div<{ $size: number; $opacity: number }>`
   margin: ${props => -props.$size / 2}px;
   border: 1px solid rgba(135, 206, 235, ${props => props.$opacity});
   border-radius: 50%;
-  pointer-events: none;
+`;
+
+// Small orbiting dot
+const OrbitDot = styled.div<{ $orbitSize: number; $dotSize: number; $duration: number; $delay: number }>`
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: ${props => props.$orbitSize}px;
+  height: ${props => props.$orbitSize}px;
+  margin: ${props => -props.$orbitSize / 2}px;
+  animation: ${slowRotate} ${props => props.$duration}s linear infinite;
+  animation-delay: ${props => -props.$delay}s;
 
   &::before {
     content: '';
     position: absolute;
-    inset: 0;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: ${props => props.$dotSize}px;
+    height: ${props => props.$dotSize}px;
     border-radius: 50%;
-    background: radial-gradient(circle, transparent 60%, rgba(135, 206, 235, 0.01) 100%);
+    background: radial-gradient(circle at 40% 40%, rgba(135, 206, 235, 0.8) 0%, rgba(100, 150, 200, 0.4) 50%, transparent 100%);
+    box-shadow: 0 0 ${props => props.$dotSize * 3}px rgba(135, 206, 235, 0.3);
   }
 `;
 
@@ -788,29 +872,42 @@ const HomePage: React.FC = () => {
       <AmbientText $top="25%" $left="75%" $delay={2} $size={11}>electronic culture</AmbientText>
       <AmbientText $top="60%" $left="3%" $delay={4} $size={9}>since 2019</AmbientText>
 
-      {/* Celestial Bodies */}
-      <CelestialContainer>
-        {/* Large gas giant - top left, partially hidden */}
-        <GasGiant $size={280} $top="-5%" $left="-8%" $hue={210} />
+      {/* Celestial System */}
+      <CelestialSystem>
+        {/* Background nebula glows */}
+        <NebulaGlow $top="5%" $left="60%" $size={400} $hue={210} />
+        <NebulaGlow $top="60%" $left="10%" $size={300} $hue={200} />
 
-        {/* Medium planet - bottom left */}
-        <GasGiant $size={180} $top="75%" $left="-4%" $hue={200} />
+        {/* Main Saturn-like planet - top left */}
+        <MainPlanet>
+          <RingSystem>
+            <Ring $index={0} />
+            <Ring $index={1} />
+            <Ring $index={2} />
+          </RingSystem>
+          <PlanetBody />
+        </MainPlanet>
 
-        {/* Distant moons */}
-        <CelestialMoon $size={50} $top="18%" $right="8%" $hue={195} />
-        <CelestialMoon $size={30} $top="65%" $right="5%" $hue={220} />
-        <CelestialMoon $size={20} $top="35%" $right="3%" $hue={205} />
+        {/* Distant planets */}
+        <DistantPlanet $size={80} $top="65%" $right="8%" $delay={0} />
+        <DistantPlanet $size={45} $top="20%" $right="12%" $delay={3} />
+        <DistantPlanet $size={120} $top="75%" $right="-3%" $delay={5} />
 
-        {/* Subtle orbit rings for central system */}
-        <SubtleOrbitRing $size={600} $opacity={0.02} />
-        <SubtleOrbitRing $size={480} $opacity={0.03} />
-        <SubtleOrbitRing $size={360} $opacity={0.025} />
+        {/* Small moons */}
+        <Moon $size={12} $top="25%" $left="15%" $delay={0} />
+        <Moon $size={8} $top="70%" $left="25%" $delay={2} />
+        <Moon $size={6} $top="40%" $left="85%" $delay={4} />
+
+        {/* Central orbit system around logo area */}
+        <OrbitPath $size={500} $opacity={0.025} />
+        <OrbitPath $size={400} $opacity={0.03} />
+        <OrbitPath $size={300} $opacity={0.02} />
 
         {/* Orbiting particles */}
-        <OrbitingParticle $orbitRadius={300} $size={6} $duration={80} $hue={200} />
-        <OrbitingParticle $orbitRadius={240} $size={4} $duration={55} $hue={210} />
-        <OrbitingParticle $orbitRadius={180} $size={3} $duration={40} $hue={195} />
-      </CelestialContainer>
+        <OrbitDot $orbitSize={500} $dotSize={5} $duration={90} $delay={0} />
+        <OrbitDot $orbitSize={400} $dotSize={4} $duration={70} $delay={20} />
+        <OrbitDot $orbitSize={300} $dotSize={3} $duration={50} $delay={10} />
+      </CelestialSystem>
 
       <MainContent>
         <TitleContainer>

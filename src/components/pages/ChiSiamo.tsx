@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import styled, { keyframes } from 'styled-components';
 import { Helmet } from 'react-helmet';
 import Header from '../common/Header';
@@ -247,60 +247,18 @@ const QuoteSection = styled.section`
 `;
 
 const Quote = styled.blockquote`
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 200;
-  letter-spacing: 2px;
-  line-height: 1.6;
+  letter-spacing: 1px;
+  line-height: 1.7;
   color: rgba(255, 255, 255, 0.7);
   font-style: italic;
   max-width: 800px;
   margin: 0 auto;
 
   @media (max-width: 768px) {
-    font-size: 20px;
+    font-size: 18px;
   }
-`;
-
-const StatsSection = styled.div`
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 30px;
-  margin-top: 80px;
-  padding: 50px 0;
-  border-top: 1px solid rgba(135, 206, 235, 0.08);
-  border-bottom: 1px solid rgba(135, 206, 235, 0.08);
-
-  @media (max-width: 900px) {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  @media (max-width: 500px) {
-    grid-template-columns: 1fr;
-  }
-`;
-
-const StatItem = styled.div`
-  text-align: center;
-`;
-
-const StatNumber = styled.div`
-  font-size: 42px;
-  font-weight: 200;
-  letter-spacing: 2px;
-  color: rgba(255, 255, 255, 0.9);
-  margin-bottom: 10px;
-
-  @media (max-width: 768px) {
-    font-size: 32px;
-  }
-`;
-
-const StatLabel = styled.div`
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 3px;
-  text-transform: uppercase;
-  color: rgba(135, 206, 235, 0.6);
 `;
 
 const ContactSection = styled.section`
@@ -433,14 +391,6 @@ const valori = [
 ];
 
 const ChiSiamo: React.FC = () => {
-  const [yearsActive, setYearsActive] = useState(0);
-
-  useEffect(() => {
-    const startYear = 2019;
-    const currentYear = new Date().getFullYear();
-    setYearsActive(currentYear - startYear);
-  }, []);
-
   return (
     <PageContainer>
       <Helmet>
@@ -473,8 +423,8 @@ const ChiSiamo: React.FC = () => {
 
         <QuoteSection>
           <Quote>
-            "La musica elettronica non si ascolta, si vive.
-            E si vive meglio insieme."
+            "L'elettronica non la ascolti: ci entri dentro.
+            E quando lo fai insieme agli altri, il mondo smette di essere mondo e diventa pura energia."
           </Quote>
         </QuoteSection>
 
