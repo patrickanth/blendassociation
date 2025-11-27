@@ -1,0 +1,28 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Eventi - lettura pubblica, scrittura solo admin
+    match /eventi/{eventoId} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.token.email in ['patrickanthonystudio@gmail.com'];
+    }
+
+    // Galleria - lettura pubblica, scrittura solo admin
+    match /galleria/{itemId} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.token.email in ['patrickanthonystudio@gmail.com'];
+    }
+
+    // Utenti/Admin - solo il proprio documento
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Configurazioni - lettura pubblica, scrittura admin
+    match /config/{docId} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.token.email in ['patrickanthonystudio@gmail.com'];
+    }
+  }
+}
