@@ -76,6 +76,36 @@ const planetOrbit = keyframes`
   100% { transform: rotate(360deg) translateX(var(--orbit-radius)) rotate(-360deg); }
 `;
 
+const celestialDrift = keyframes`
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.15;
+  }
+  33% {
+    transform: translate(10px, -15px) scale(1.02);
+    opacity: 0.2;
+  }
+  66% {
+    transform: translate(-5px, 10px) scale(0.98);
+    opacity: 0.12;
+  }
+`;
+
+const atmosphereGlow = keyframes`
+  0%, 100% {
+    box-shadow:
+      inset -20px -20px 40px rgba(0, 0, 0, 0.6),
+      inset 10px 10px 30px rgba(135, 206, 235, 0.1),
+      0 0 60px rgba(135, 206, 235, 0.05);
+  }
+  50% {
+    box-shadow:
+      inset -20px -20px 40px rgba(0, 0, 0, 0.5),
+      inset 10px 10px 30px rgba(135, 206, 235, 0.15),
+      0 0 80px rgba(135, 206, 235, 0.08);
+  }
+`;
+
 const lineGlow = keyframes`
   0%, 100% { opacity: 0.1; }
   50% { opacity: 0.3; }
@@ -252,8 +282,8 @@ const AmbientText = styled.div<{ $top: string; $left: string; $delay: number; $s
   }
 `;
 
-// Planets
-const PlanetContainer = styled.div`
+// Celestial Bodies
+const CelestialContainer = styled.div`
   position: absolute;
   inset: 0;
   z-index: 3;
@@ -261,33 +291,81 @@ const PlanetContainer = styled.div`
   overflow: hidden;
 `;
 
-const Planet = styled.div<{ $size: number; $top: string; $left: string; $color: string; $blur: number }>`
+// Main large planet - elegant gas giant style
+const GasGiant = styled.div<{ $size: number; $top: string; $left: string; $hue: number }>`
   position: absolute;
   top: ${props => props.$top};
   left: ${props => props.$left};
   width: ${props => props.$size}px;
   height: ${props => props.$size}px;
   border-radius: 50%;
-  background: radial-gradient(
-    circle at 30% 30%,
-    ${props => props.$color} 0%,
-    rgba(0, 0, 0, 0.8) 70%,
-    transparent 100%
-  );
-  filter: blur(${props => props.$blur}px);
-  opacity: 0.4;
-  animation: ${float} ${props => 10 + props.$size / 10}s ease-in-out infinite;
+  background:
+    radial-gradient(
+      ellipse 80% 50% at 30% 20%,
+      hsla(${props => props.$hue}, 30%, 40%, 0.15) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 35% 35%,
+      hsla(${props => props.$hue}, 25%, 25%, 0.3) 0%,
+      hsla(${props => props.$hue}, 20%, 15%, 0.2) 40%,
+      hsla(${props => props.$hue}, 15%, 8%, 0.15) 70%,
+      transparent 100%
+    );
+  animation: ${celestialDrift} ${props => 25 + props.$size / 5}s ease-in-out infinite;
+  animation-delay: ${props => props.$hue / 30}s;
 
   &::before {
     content: '';
     position: absolute;
-    inset: -20%;
+    inset: 5%;
     border-radius: 50%;
-    background: radial-gradient(circle, ${props => props.$color}20 0%, transparent 70%);
+    background:
+      linear-gradient(
+        135deg,
+        transparent 0%,
+        hsla(${props => props.$hue}, 40%, 60%, 0.03) 40%,
+        transparent 60%
+      );
+    animation: ${atmosphereGlow} ${props => 8 + props.$size / 20}s ease-in-out infinite;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: -5%;
+    border-radius: 50%;
+    background: radial-gradient(
+      circle at 30% 30%,
+      hsla(${props => props.$hue}, 50%, 70%, 0.04) 0%,
+      transparent 50%
+    );
   }
 `;
 
-const OrbitingPlanet = styled.div<{ $orbitRadius: number; $size: number; $duration: number; $color: string }>`
+// Small distant moons
+const CelestialMoon = styled.div<{ $size: number; $top: string; $right: string; $hue: number }>`
+  position: absolute;
+  top: ${props => props.$top};
+  right: ${props => props.$right};
+  width: ${props => props.$size}px;
+  height: ${props => props.$size}px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 40% 40%,
+    hsla(${props => props.$hue}, 20%, 50%, 0.2) 0%,
+    hsla(${props => props.$hue}, 15%, 20%, 0.1) 60%,
+    transparent 100%
+  );
+  box-shadow:
+    inset -3px -3px 8px rgba(0, 0, 0, 0.4),
+    0 0 ${props => props.$size * 0.5}px hsla(${props => props.$hue}, 30%, 50%, 0.05);
+  animation: ${celestialDrift} ${props => 18 + props.$size}s ease-in-out infinite;
+  animation-delay: ${props => props.$hue / 20}s;
+`;
+
+// Orbiting particle
+const OrbitingParticle = styled.div<{ $orbitRadius: number; $size: number; $duration: number; $hue: number }>`
   position: absolute;
   top: 50%;
   left: 50%;
@@ -304,25 +382,33 @@ const OrbitingPlanet = styled.div<{ $orbitRadius: number; $size: number; $durati
     border-radius: 50%;
     background: radial-gradient(
       circle at 40% 40%,
-      ${props => props.$color} 0%,
-      rgba(20, 20, 30, 0.9) 60%,
+      hsla(${props => props.$hue}, 50%, 70%, 0.6) 0%,
+      hsla(${props => props.$hue}, 40%, 40%, 0.3) 50%,
       transparent 100%
     );
-    box-shadow: 0 0 ${props => props.$size}px ${props => props.$color}40;
+    box-shadow: 0 0 ${props => props.$size * 2}px hsla(${props => props.$hue}, 50%, 60%, 0.15);
   }
 `;
 
-// Orbit rings
-const OrbitRing = styled.div<{ $size: number }>`
+// Subtle orbit rings
+const SubtleOrbitRing = styled.div<{ $size: number; $opacity: number }>`
   position: absolute;
   top: 50%;
   left: 50%;
   width: ${props => props.$size}px;
   height: ${props => props.$size}px;
   margin: ${props => -props.$size / 2}px;
-  border: 1px solid rgba(135, 206, 235, 0.05);
+  border: 1px solid rgba(135, 206, 235, ${props => props.$opacity});
   border-radius: 50%;
   pointer-events: none;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: radial-gradient(circle, transparent 60%, rgba(135, 206, 235, 0.01) 100%);
+  }
 `;
 
 const MainContent = styled.main`
@@ -702,22 +788,29 @@ const HomePage: React.FC = () => {
       <AmbientText $top="25%" $left="75%" $delay={2} $size={11}>electronic culture</AmbientText>
       <AmbientText $top="60%" $left="3%" $delay={4} $size={9}>since 2019</AmbientText>
 
-      {/* Planets */}
-      <PlanetContainer>
-        <Planet $size={200} $top="10%" $left="-5%" $color="rgba(70, 100, 150, 0.3)" $blur={2} />
-        <Planet $size={80} $top="70%" $left="85%" $color="rgba(135, 206, 235, 0.2)" $blur={1} />
-        <Planet $size={40} $top="20%" $left="90%" $color="rgba(100, 150, 200, 0.3)" $blur={0} />
-        <Planet $size={150} $top="80%" $left="-3%" $color="rgba(50, 80, 120, 0.25)" $blur={3} />
+      {/* Celestial Bodies */}
+      <CelestialContainer>
+        {/* Large gas giant - top left, partially hidden */}
+        <GasGiant $size={280} $top="-5%" $left="-8%" $hue={210} />
 
-        {/* Orbit rings for central system */}
-        <OrbitRing $size={500} />
-        <OrbitRing $size={400} />
-        <OrbitRing $size={300} />
+        {/* Medium planet - bottom left */}
+        <GasGiant $size={180} $top="75%" $left="-4%" $hue={200} />
 
-        {/* Small orbiting planets */}
-        <OrbitingPlanet $orbitRadius={280} $size={8} $duration={60} $color="rgba(135, 206, 235, 0.6)" />
-        <OrbitingPlanet $orbitRadius={220} $size={5} $duration={45} $color="rgba(100, 150, 200, 0.5)" />
-      </PlanetContainer>
+        {/* Distant moons */}
+        <CelestialMoon $size={50} $top="18%" $right="8%" $hue={195} />
+        <CelestialMoon $size={30} $top="65%" $right="5%" $hue={220} />
+        <CelestialMoon $size={20} $top="35%" $right="3%" $hue={205} />
+
+        {/* Subtle orbit rings for central system */}
+        <SubtleOrbitRing $size={600} $opacity={0.02} />
+        <SubtleOrbitRing $size={480} $opacity={0.03} />
+        <SubtleOrbitRing $size={360} $opacity={0.025} />
+
+        {/* Orbiting particles */}
+        <OrbitingParticle $orbitRadius={300} $size={6} $duration={80} $hue={200} />
+        <OrbitingParticle $orbitRadius={240} $size={4} $duration={55} $hue={210} />
+        <OrbitingParticle $orbitRadius={180} $size={3} $duration={40} $hue={195} />
+      </CelestialContainer>
 
       <MainContent>
         <TitleContainer>

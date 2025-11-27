@@ -10,6 +10,8 @@ const HomePage = lazy(() => import('./components/HomePage'));
 const Eventi = lazy(() => import('./components/pages/Eventi'));
 const Galleria = lazy(() => import('./components/pages/Galleria'));
 const ChiSiamo = lazy(() => import('./components/pages/ChiSiamo'));
+const Merch = lazy(() => import('./components/pages/Merch'));
+const Label = lazy(() => import('./components/pages/Label'));
 const AdminLogin = lazy(() => import('./components/admin/AdminLogin'));
 const AdminDashboard = lazy(() => import('./components/admin/AdminDashboard'));
 
@@ -72,6 +74,8 @@ const AppContent: React.FC = () => {
           <Route path="/eventi" element={<Eventi />} />
           <Route path="/galleria" element={<Galleria />} />
           <Route path="/chi-siamo" element={<ChiSiamo />} />
+          <Route path="/merch" element={<Merch />} />
+          <Route path="/label" element={<Label />} />
           
           {/* Route login admin */}
           <Route path="/admin/login" element={<LoginRoute />} />

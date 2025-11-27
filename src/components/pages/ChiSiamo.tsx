@@ -491,27 +491,6 @@ const ChiSiamo: React.FC = () => {
         </ContentSection>
 
         <ContentSection delay={0.4}>
-          <StatsSection>
-            <StatItem>
-              <StatNumber>{yearsActive}+</StatNumber>
-              <StatLabel>Anni di attività</StatLabel>
-            </StatItem>
-            <StatItem>
-              <StatNumber>50+</StatNumber>
-              <StatLabel>Eventi organizzati</StatLabel>
-            </StatItem>
-            <StatItem>
-              <StatNumber>100+</StatNumber>
-              <StatLabel>Artisti ospitati</StatLabel>
-            </StatItem>
-            <StatItem>
-              <StatNumber>1</StatNumber>
-              <StatLabel>Obiettivo</StatLabel>
-            </StatItem>
-          </StatsSection>
-        </ContentSection>
-
-        <ContentSection delay={0.5}>
           <Paragraph>
             Tutto è iniziato in una cantina di Bologna, tra vinili e casse autocostruite.
             Un gruppo di amici con la stessa ossessione per il groove minimale e le atmosfere

@@ -195,6 +195,12 @@ const Header: React.FC<HeaderProps> = ({ showLogo = true }) => {
         <NavLink to="/galleria" $active={isActive('/galleria')}>
           Galleria
         </NavLink>
+        <NavLink to="/label" $active={isActive('/label')}>
+          Label
+        </NavLink>
+        <NavLink to="/merch" $active={isActive('/merch')}>
+          Merch
+        </NavLink>
         <NavLink to="/chi-siamo" $active={isActive('/chi-siamo')}>
           Chi Siamo
         </NavLink>
