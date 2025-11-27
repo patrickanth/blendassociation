@@ -90,7 +90,7 @@ const PageTitle = styled.h1`
   font-weight: 200;
   letter-spacing: 0.4em;
   text-transform: uppercase;
-  margin-bottom: 40px;
+  margin-bottom: 15px;
   animation: ${textReveal} 1.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
   background: linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(135,206,235,0.5) 100%);
   -webkit-background-clip: text;
@@ -98,14 +98,14 @@ const PageTitle = styled.h1`
   background-clip: text;
 `;
 
-const HeroSubtitle = styled.p`
-  font-size: 16px;
+const PageSubtitle = styled.p`
+  font-size: 14px;
   font-weight: 300;
-  letter-spacing: 4px;
-  text-transform: uppercase;
-  color: rgba(135, 206, 235, 0.6);
+  letter-spacing: 6px;
+  text-transform: lowercase;
+  color: rgba(255, 255, 255, 0.4);
   opacity: 0;
-  animation: ${fadeIn} 1s 0.5s forwards;
+  animation: ${fadeIn} 1s 0.3s forwards;
 `;
 
 const ContentSection = styled.section<{ delay?: number }>`
@@ -124,16 +124,6 @@ const SectionDivider = styled.div`
   height: 1px;
   background: linear-gradient(90deg, rgba(135, 206, 235, 0.6), transparent);
   margin: 0 auto 40px;
-`;
-
-const SectionTitle = styled.h2`
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 5px;
-  text-transform: uppercase;
-  color: #87ceeb;
-  margin-bottom: 30px;
-  text-align: center;
 `;
 
 const ParagraphLarge = styled.p`
@@ -324,15 +314,6 @@ const ContactSection = styled.section`
   animation-fill-mode: both;
 `;
 
-const ContactTitle = styled.h2`
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 4px;
-  text-transform: uppercase;
-  color: #87ceeb;
-  margin-bottom: 25px;
-`;
-
 const ContactText = styled.p`
   font-size: 15px;
   font-weight: 300;
@@ -474,7 +455,7 @@ const ChiSiamo: React.FC = () => {
       <MainContent>
         <HeroSection>
           <PageTitle>Blend</PageTitle>
-          <HeroSubtitle>Minimal Deep Tech Collective</HeroSubtitle>
+          <PageSubtitle>association</PageSubtitle>
         </HeroSection>
 
         <ContentSection delay={0.2}>
@@ -498,7 +479,6 @@ const ChiSiamo: React.FC = () => {
         </QuoteSection>
 
         <ContentSection delay={0.3}>
-          <SectionTitle>I Nostri Principi</SectionTitle>
           <ValuesGrid>
             {valori.map((valore) => (
               <ValueCard key={valore.number}>
@@ -532,7 +512,6 @@ const ChiSiamo: React.FC = () => {
         </ContentSection>
 
         <ContentSection delay={0.5}>
-          <SectionTitle>La Nostra Storia</SectionTitle>
           <Paragraph>
             Tutto è iniziato in una cantina di Bologna, tra vinili e casse autocostruite.
             Un gruppo di amici con la stessa ossessione per il groove minimale e le atmosfere
@@ -547,7 +526,6 @@ const ChiSiamo: React.FC = () => {
         </ContentSection>
 
         <ContactSection>
-          <ContactTitle>Contatti</ContactTitle>
           <ContactText>
             Per booking, collaborazioni o semplicemente per salutare.
             Rispondiamo sempre, a volte ci mettiamo un po'.

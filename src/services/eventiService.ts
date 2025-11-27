@@ -18,6 +18,17 @@ import { Evento } from '../types';
 // Cache in memoria per ridurre chiamate al DB
 const cache = new Map<string, { data: any; timestamp: number }>();
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minuti
+const QUERY_TIMEOUT = 10000; // 10 secondi timeout
+
+// Helper per aggiungere timeout alle Promise
+function withTimeout<T>(promise: Promise<T>, ms: number, errorMessage: string): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(errorMessage)), ms)
+    )
+  ]);
+}
 
 class EventiService {
   private readonly collectionName = 'eventi';
@@ -40,10 +51,10 @@ class EventiService {
     cache.clear();
   }
 
-  // Ottieni eventi pubblici (con cache)
+  // Ottieni eventi pubblici (con cache e timeout)
   async getEventiPubblici(): Promise<Evento[]> {
     const cacheKey = 'eventi-pubblici';
-    
+
     // Controlla cache
     const cached = this.getCached<Evento[]>(cacheKey);
     if (cached) return cached;
@@ -57,7 +68,12 @@ class EventiService {
         limit(50)
       );
 
-      const snapshot = await getDocs(q);
+      const snapshot = await withTimeout(
+        getDocs(q),
+        QUERY_TIMEOUT,
+        'Timeout caricamento eventi. Verifica che gli indici Firestore siano configurati.'
+      );
+
       const eventi: Evento[] = [];
 
       snapshot.forEach((doc) => {
@@ -76,8 +92,13 @@ class EventiService {
       this.setCache(cacheKey, eventi);
       return eventi;
 
-    } catch (error) {
-      console.error('Errore caricamento eventi:', error);
+    } catch (error: any) {
+      // Se è un errore di indice mancante, log specifico
+      if (error?.message?.includes('index') || error?.code === 'failed-precondition') {
+        console.error('Errore: Indice Firestore mancante. Esegui: firebase deploy --only firestore:indexes');
+      } else {
+        console.error('Errore caricamento eventi:', error);
+      }
       return [];
     }
   }
@@ -88,7 +109,12 @@ class EventiService {
       const eventiRef = collection(db, this.collectionName);
       const q = query(eventiRef, orderBy('createdAt', 'desc'));
 
-      const snapshot = await getDocs(q);
+      const snapshot = await withTimeout(
+        getDocs(q),
+        QUERY_TIMEOUT,
+        'Timeout caricamento eventi admin.'
+      );
+
       const eventi: Evento[] = [];
 
       snapshot.forEach((doc) => {
@@ -114,14 +140,18 @@ class EventiService {
   // Ottieni singolo evento
   async getEvento(id: string): Promise<Evento | null> {
     const cacheKey = `evento-${id}`;
-    
+
     // Controlla cache
     const cached = this.getCached<Evento>(cacheKey);
     if (cached) return cached;
 
     try {
       const eventoRef = doc(db, this.collectionName, id);
-      const eventoSnap = await getDoc(eventoRef);
+      const eventoSnap = await withTimeout(
+        getDoc(eventoRef),
+        QUERY_TIMEOUT,
+        'Timeout caricamento evento.'
+      );
 
       if (!eventoSnap.exists()) return null;
 
@@ -158,10 +188,10 @@ class EventiService {
       };
 
       const docRef = await addDoc(collection(db, this.collectionName), eventoData);
-      
+
       // Pulisci cache
       this.clearCache();
-      
+
       return docRef.id;
     } catch (error) {
       console.error('Errore creazione evento:', error);
@@ -186,7 +216,7 @@ class EventiService {
       }
 
       await updateDoc(eventoRef, updateData);
-      
+
       // Pulisci cache
       this.clearCache();
     } catch (error) {
@@ -199,7 +229,7 @@ class EventiService {
   async deleteEvento(id: string): Promise<void> {
     try {
       await deleteDoc(doc(db, this.collectionName, id));
-      
+
       // Pulisci cache
       this.clearCache();
     } catch (error) {
@@ -211,7 +241,7 @@ class EventiService {
   // Eventi in evidenza per homepage
   async getEventiInEvidenza(limite = 3): Promise<Evento[]> {
     const cacheKey = `eventi-evidenza-${limite}`;
-    
+
     // Controlla cache
     const cached = this.getCached<Evento[]>(cacheKey);
     if (cached) return cached;
@@ -226,7 +256,12 @@ class EventiService {
         limit(limite)
       );
 
-      const snapshot = await getDocs(q);
+      const snapshot = await withTimeout(
+        getDocs(q),
+        QUERY_TIMEOUT,
+        'Timeout caricamento eventi in evidenza.'
+      );
+
       const eventi: Evento[] = [];
 
       snapshot.forEach((doc) => {
@@ -245,8 +280,12 @@ class EventiService {
       this.setCache(cacheKey, eventi);
       return eventi;
 
-    } catch (error) {
-      console.error('Errore caricamento eventi in evidenza:', error);
+    } catch (error: any) {
+      if (error?.message?.includes('index') || error?.code === 'failed-precondition') {
+        console.error('Errore: Indice Firestore mancante per eventi in evidenza.');
+      } else {
+        console.error('Errore caricamento eventi in evidenza:', error);
+      }
       return [];
     }
   }
