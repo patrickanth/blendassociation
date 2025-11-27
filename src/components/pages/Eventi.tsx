@@ -6,11 +6,10 @@ import { Evento } from '../../types';
 import LoadingSpinner from '../common/LoadingSpinner';
 import Header from '../common/Header';
 
-// Animazioni
 const fadeIn = keyframes`
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(30px);
   }
   to {
     opacity: 1;
@@ -18,30 +17,30 @@ const fadeIn = keyframes`
   }
 `;
 
-const glitch = keyframes`
+const pulseGlow = keyframes`
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(135, 206, 235, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(135, 206, 235, 0.2);
+  }
+`;
+
+const scanline = keyframes`
   0% {
-    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
-    transform: translate(0);
+    transform: translateY(-100%);
   }
-  2% {
-    clip-path: polygon(0 10%, 100% 10%, 100% 90%, 0 90%);
-    transform: translate(-5px, 0);
+  100% {
+    transform: translateY(100vh);
   }
-  4% {
-    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
-    transform: translate(5px, 0);
-  }
-  6% {
-    clip-path: polygon(0 50%, 100% 50%, 100% 55%, 0 55%);
-    transform: translate(5px, 0);
-  }
-  8% {
-    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
-    transform: translate(0);
+`;
+
+const textReveal = keyframes`
+  0% {
+    clip-path: polygon(0 0, 0 0, 0 100%, 0 100%);
   }
   100% {
     clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
-    transform: translate(0);
   }
 `;
 
@@ -51,51 +50,78 @@ const PageContainer = styled.div`
   color: white;
   font-family: 'Montserrat', sans-serif;
   overflow-x: hidden;
+  position: relative;
+
+  &::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, rgba(135, 206, 235, 0.3), transparent);
+    animation: ${scanline} 8s linear infinite;
+    pointer-events: none;
+    z-index: 1000;
+  }
 `;
 
 const FilterBar = styled.div`
-  background: #000;
-  padding: 30px 5%;
+  background: rgba(0, 0, 0, 0.95);
+  padding: 40px 5%;
   display: flex;
-  gap: 30px;
+  gap: 40px;
   align-items: center;
   justify-content: center;
   flex-wrap: wrap;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(135, 206, 235, 0.1);
+  position: relative;
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 200px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(135, 206, 235, 0.5), transparent);
+  }
 
   @media (max-width: 768px) {
-    padding: 20px 3%;
-    gap: 15px;
+    padding: 25px 3%;
+    gap: 20px;
   }
 `;
 
 const FilterButton = styled.button<{ active: boolean }>`
   background: transparent;
   border: none;
-  color: ${props => props.active ? '#87ceeb' : 'rgba(255, 255, 255, 0.5)'};
+  color: ${props => props.active ? '#87ceeb' : 'rgba(255, 255, 255, 0.4)'};
   padding: 0;
   font-family: 'Montserrat', sans-serif;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: ${props => props.active ? '600' : '400'};
-  letter-spacing: 2px;
+  letter-spacing: 3px;
   text-transform: uppercase;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
 
   &::after {
     content: '';
     position: absolute;
-    bottom: -5px;
+    bottom: -8px;
     left: 0;
     width: ${props => props.active ? '100%' : '0'};
     height: 1px;
     background: #87ceeb;
-    transition: width 0.3s ease;
+    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   &:hover {
     color: #87ceeb;
+    text-shadow: 0 0 20px rgba(135, 206, 235, 0.5);
 
     &::after {
       width: 100%;
@@ -103,15 +129,18 @@ const FilterButton = styled.button<{ active: boolean }>`
   }
 
   @media (max-width: 768px) {
-    font-size: 12px;
+    font-size: 11px;
+    letter-spacing: 2px;
   }
 `;
 
 const MainContent = styled.main`
-  padding: 40px 5%;
+  padding: 60px 5%;
+  max-width: 1400px;
+  margin: 0 auto;
 
   @media (max-width: 768px) {
-    padding: 20px 3%;
+    padding: 30px 4%;
   }
 `;
 
@@ -128,147 +157,215 @@ const NoEventsContainer = styled.div`
 
 const NoEventsText = styled.div`
   text-align: center;
-  animation: ${fadeIn} 2s ease;
+  animation: ${fadeIn} 1.5s ease;
 `;
 
-interface GlitchLetterProps {
-  delay: number;
-}
-
-const GlitchLetter = styled.span<GlitchLetterProps>`
-  display: inline-block;
-  position: relative;
-  opacity: 0;
-  animation: ${glitch} 0.8s ${props => props.delay}s forwards;
+const NextEventTitle = styled.div`
+  font-size: clamp(48px, 10vw, 120px);
+  font-weight: 200;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  margin-bottom: 30px;
+  animation: ${textReveal} 1.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  background: linear-gradient(180deg, rgba(255,255,255,0.9) 0%, rgba(135,206,235,0.6) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 `;
 
 const ComingSoonText = styled.p`
-  font-size: 18px;
+  font-size: 14px;
   font-weight: 300;
-  letter-spacing: 3px;
-  margin-top: 30px;
+  letter-spacing: 6px;
+  text-transform: uppercase;
   opacity: 0;
-  animation: ${fadeIn} 1s 2.5s forwards;
-  color: rgba(255, 255, 255, 0.8);
+  animation: ${fadeIn} 1s 1s forwards;
+  color: rgba(135, 206, 235, 0.7);
 `;
 
 const EventSection = styled.div`
-  margin-bottom: 40px;
+  margin-bottom: 60px;
   animation: ${fadeIn} 0.8s ease;
+  animation-fill-mode: both;
+
+  &:nth-child(1) { animation-delay: 0.1s; }
+  &:nth-child(2) { animation-delay: 0.2s; }
+  &:nth-child(3) { animation-delay: 0.3s; }
 `;
 
 const EventContainer = styled.div<{ hasImage: boolean }>`
   display: grid;
-  grid-template-columns: ${props => props.hasImage ? '400px 1fr' : '1fr'};
-  gap: 40px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
+  grid-template-columns: ${props => props.hasImage ? '450px 1fr' : '1fr'};
+  gap: 50px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(135, 206, 235, 0.08);
+  border-radius: 2px;
   overflow: hidden;
-  transition: all 0.3s ease;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(135, 206, 235, 0.03) 0%, transparent 50%);
+    pointer-events: none;
+  }
 
   &:hover {
-    border-color: rgba(70, 130, 180, 0.5);
-    transform: translateY(-5px);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    border-color: rgba(135, 206, 235, 0.2);
+    transform: translateY(-3px);
+    animation: ${pulseGlow} 2s ease infinite;
 
     .event-image {
-      transform: scale(1.05);
+      transform: scale(1.03);
+      filter: brightness(1.1);
+    }
+
+    .event-date-text {
+      text-shadow: 0 0 20px rgba(135, 206, 235, 0.8);
     }
   }
 
   @media (max-width: 1024px) {
     grid-template-columns: 1fr;
+    gap: 0;
+  }
+`;
+
+const EventImageWrapper = styled.div`
+  position: relative;
+  overflow: hidden;
+  height: 350px;
+
+  @media (max-width: 1024px) {
+    height: 280px;
   }
 `;
 
 const EventImage = styled.img`
   width: 100%;
-  height: 300px;
+  height: 100%;
   object-fit: cover;
-  transition: transform 0.6s ease;
-
-  @media (max-width: 1024px) {
-    height: 250px;
-  }
+  transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  filter: brightness(0.9);
 `;
 
 const EventInfo = styled.div`
-  padding: 30px;
+  padding: 45px;
   display: flex;
   flex-direction: column;
   justify-content: center;
+  position: relative;
 
   @media (max-width: 768px) {
-    padding: 20px;
+    padding: 30px 25px;
   }
 `;
 
 const EventDate = styled.div`
-  font-size: 14px;
-  font-weight: 600;
-  letter-spacing: 2px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 4px;
   color: #87ceeb;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
   text-transform: uppercase;
+  transition: all 0.3s ease;
 `;
 
 const EventCategory = styled.div`
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 400;
-  letter-spacing: 2px;
+  letter-spacing: 3px;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.5);
-  margin-bottom: 15px;
+  color: rgba(255, 255, 255, 0.35);
+  margin-bottom: 20px;
 `;
 
 const EventTitle = styled.h2`
-  font-size: 32px;
-  font-weight: 600;
-  letter-spacing: 2px;
-  margin-bottom: 15px;
+  font-size: 36px;
+  font-weight: 300;
+  letter-spacing: 4px;
+  margin-bottom: 18px;
+  text-transform: uppercase;
+  line-height: 1.2;
 
   @media (max-width: 768px) {
-    font-size: 24px;
+    font-size: 26px;
+    letter-spacing: 2px;
   }
 `;
 
 const EventLocation = styled.div`
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 400;
-  letter-spacing: 1px;
-  color: rgba(255, 255, 255, 0.7);
-  margin-bottom: 15px;
+  letter-spacing: 2px;
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  &::before {
+    content: '';
+    width: 4px;
+    height: 4px;
+    background: rgba(135, 206, 235, 0.6);
+    border-radius: 50%;
+  }
 `;
 
 const EventLineup = styled.div`
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.6);
-  margin-bottom: 20px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.45);
+  margin-bottom: 30px;
+  line-height: 1.8;
 
   span {
-    color: #87ceeb;
-    font-weight: 600;
+    color: rgba(135, 206, 235, 0.8);
+    font-weight: 500;
+    letter-spacing: 1px;
   }
 `;
 
 const ViewDetails = styled.button`
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  color: white;
-  padding: 12px 24px;
+  border: 1px solid rgba(135, 206, 235, 0.3);
+  color: rgba(255, 255, 255, 0.9);
+  padding: 14px 32px;
   font-family: 'Montserrat', sans-serif;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 2px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 3px;
   text-transform: uppercase;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   align-self: flex-start;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(135, 206, 235, 0.1), transparent);
+    transition: left 0.5s ease;
+  }
 
   &:hover {
-    background: white;
-    color: black;
+    border-color: rgba(135, 206, 235, 0.6);
+    color: #87ceeb;
+    box-shadow: 0 0 30px rgba(135, 206, 235, 0.15);
+
+    &::before {
+      left: 100%;
+    }
   }
 `;
 
@@ -293,7 +390,6 @@ const Eventi: React.FC = () => {
   const loadEventi = async () => {
     try {
       setIsLoading(true);
-      // Usa il metodo ottimizzato che carica solo eventi pubblici
       const eventiData = await eventiService.getEventiPubblici();
       setEventi(eventiData);
     } catch (error) {
@@ -303,7 +399,6 @@ const Eventi: React.FC = () => {
     }
   };
 
-  // Filtra eventi con useMemo per ottimizzare performance
   const filteredEventi = useMemo(() => {
     if (selectedCategory === 'tutti') return eventi;
     return eventi.filter(evento => evento.categoria === selectedCategory);
@@ -345,7 +440,6 @@ const Eventi: React.FC = () => {
 
       <Header showLogo={true} />
 
-      {/* Mostra filtri solo se ci sono eventi */}
       {eventi.length > 0 && (
         <FilterBar>
           {categorie.map(categoria => (
@@ -364,19 +458,7 @@ const Eventi: React.FC = () => {
         {filteredEventi.length === 0 ? (
           <NoEventsContainer>
             <NoEventsText>
-              <div style={{ 
-                fontSize: 'clamp(48px, 8vw, 96px)', 
-                fontWeight: '300',
-                letterSpacing: '0.3em',
-                textTransform: 'uppercase',
-                marginBottom: '20px'
-              }}>
-                {"Next Event".split('').map((letter, index) => (
-                  <GlitchLetter key={index} delay={index * 0.1}>
-                    {letter === ' ' ? '\u00A0' : letter}
-                  </GlitchLetter>
-                ))}
-              </div>
+              <NextEventTitle>Next Event</NextEventTitle>
               <ComingSoonText>Coming Soon</ComingSoonText>
             </NoEventsText>
           </NoEventsContainer>
@@ -385,33 +467,36 @@ const Eventi: React.FC = () => {
             <EventSection key={evento.id}>
               <EventContainer hasImage={evento.immagini.length > 0}>
                 {evento.immagini.length > 0 && (
-                  <EventImage 
-                    className="event-image"
-                    src={evento.immagini[0]} 
-                  />
+                  <EventImageWrapper>
+                    <EventImage
+                      className="event-image"
+                      src={evento.immagini[0]}
+                      alt={evento.titolo}
+                    />
+                  </EventImageWrapper>
                 )}
-                
-                <EventInfo className="event-info">
-                  <EventDate className="event-date">
-                    <span>{formatDate(evento.data)}</span>
+
+                <EventInfo>
+                  <EventDate className="event-date-text">
+                    {formatDate(evento.data)}
                   </EventDate>
-                  
+
                   <EventCategory>
                     {getCategoryLabel(evento.categoria)}
                   </EventCategory>
-                  
+
                   <EventTitle>{evento.titolo}</EventTitle>
-                  
+
                   <EventLocation>
-                    {evento.location.nome} • {evento.location.citta}
+                    {evento.location.nome} — {evento.location.citta}
                   </EventLocation>
-                  
+
                   {evento.lineup && evento.lineup.length > 0 && (
                     <EventLineup>
                       <span>Line-up:</span> {formatLineup(evento.lineup)}
                     </EventLineup>
                   )}
-                  
+
                   <ViewDetails>
                     {evento.ticketLink ? 'Get Tickets' : 'View Details'}
                   </ViewDetails>
