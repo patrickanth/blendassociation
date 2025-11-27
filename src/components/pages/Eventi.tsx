@@ -1,12 +1,49 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 import { Helmet } from 'react-helmet';
 import { eventiService } from '../../services/eventiService';
 import { Evento } from '../../types';
 import LoadingSpinner from '../common/LoadingSpinner';
 import Header from '../common/Header';
 
-// ... (mantieni tutti gli styled components esistenti) ...
+// Animazioni
+const fadeIn = keyframes`
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+`;
+
+const glitch = keyframes`
+  0% {
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+    transform: translate(0);
+  }
+  2% {
+    clip-path: polygon(0 10%, 100% 10%, 100% 90%, 0 90%);
+    transform: translate(-5px, 0);
+  }
+  4% {
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+    transform: translate(5px, 0);
+  }
+  6% {
+    clip-path: polygon(0 50%, 100% 50%, 100% 55%, 0 55%);
+    transform: translate(5px, 0);
+  }
+  8% {
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+    transform: translate(0);
+  }
+  100% {
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+    transform: translate(0);
+  }
+`;
 
 const PageContainer = styled.div`
   min-height: 100vh;
@@ -16,7 +53,224 @@ const PageContainer = styled.div`
   overflow-x: hidden;
 `;
 
-// ... (resto degli styled components) ...
+const FilterBar = styled.div`
+  background: #000;
+  padding: 30px 5%;
+  display: flex;
+  gap: 30px;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+
+  @media (max-width: 768px) {
+    padding: 20px 3%;
+    gap: 15px;
+  }
+`;
+
+const FilterButton = styled.button<{ active: boolean }>`
+  background: transparent;
+  border: none;
+  color: ${props => props.active ? '#87ceeb' : 'rgba(255, 255, 255, 0.5)'};
+  padding: 0;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 14px;
+  font-weight: ${props => props.active ? '600' : '400'};
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 0;
+    width: ${props => props.active ? '100%' : '0'};
+    height: 1px;
+    background: #87ceeb;
+    transition: width 0.3s ease;
+  }
+
+  &:hover {
+    color: #87ceeb;
+
+    &::after {
+      width: 100%;
+    }
+  }
+
+  @media (max-width: 768px) {
+    font-size: 12px;
+  }
+`;
+
+const MainContent = styled.main`
+  padding: 40px 5%;
+
+  @media (max-width: 768px) {
+    padding: 20px 3%;
+  }
+`;
+
+const NoEventsContainer = styled.div`
+  position: relative;
+  width: 100%;
+  min-height: calc(100vh - 200px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background-color: #000000;
+`;
+
+const NoEventsText = styled.div`
+  text-align: center;
+  animation: ${fadeIn} 2s ease;
+`;
+
+interface GlitchLetterProps {
+  delay: number;
+}
+
+const GlitchLetter = styled.span<GlitchLetterProps>`
+  display: inline-block;
+  position: relative;
+  opacity: 0;
+  animation: ${glitch} 0.8s ${props => props.delay}s forwards;
+`;
+
+const ComingSoonText = styled.p`
+  font-size: 18px;
+  font-weight: 300;
+  letter-spacing: 3px;
+  margin-top: 30px;
+  opacity: 0;
+  animation: ${fadeIn} 1s 2.5s forwards;
+  color: rgba(255, 255, 255, 0.8);
+`;
+
+const EventSection = styled.div`
+  margin-bottom: 40px;
+  animation: ${fadeIn} 0.8s ease;
+`;
+
+const EventContainer = styled.div<{ hasImage: boolean }>`
+  display: grid;
+  grid-template-columns: ${props => props.hasImage ? '400px 1fr' : '1fr'};
+  gap: 40px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+
+  &:hover {
+    border-color: rgba(70, 130, 180, 0.5);
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+
+    .event-image {
+      transform: scale(1.05);
+    }
+  }
+
+  @media (max-width: 1024px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const EventImage = styled.img`
+  width: 100%;
+  height: 300px;
+  object-fit: cover;
+  transition: transform 0.6s ease;
+
+  @media (max-width: 1024px) {
+    height: 250px;
+  }
+`;
+
+const EventInfo = styled.div`
+  padding: 30px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+
+  @media (max-width: 768px) {
+    padding: 20px;
+  }
+`;
+
+const EventDate = styled.div`
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  color: #87ceeb;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+`;
+
+const EventCategory = styled.div`
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 15px;
+`;
+
+const EventTitle = styled.h2`
+  font-size: 32px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  margin-bottom: 15px;
+
+  @media (max-width: 768px) {
+    font-size: 24px;
+  }
+`;
+
+const EventLocation = styled.div`
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 1px;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 15px;
+`;
+
+const EventLineup = styled.div`
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.6);
+  margin-bottom: 20px;
+
+  span {
+    color: #87ceeb;
+    font-weight: 600;
+  }
+`;
+
+const ViewDetails = styled.button`
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  padding: 12px 24px;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  align-self: flex-start;
+
+  &:hover {
+    background: white;
+    color: black;
+  }
+`;
 
 const categorie = [
   { key: 'tutti', label: 'All Events' },

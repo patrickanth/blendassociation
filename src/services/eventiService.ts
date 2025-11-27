@@ -10,11 +10,10 @@ import {
   where,
   orderBy,
   limit,
-  Timestamp,
-  QueryConstraint
+  Timestamp
 } from 'firebase/firestore';
 import { db } from './firebase';
-import { Evento, EventoFilters } from '../types';
+import { Evento } from '../types';
 
 // Cache in memoria per ridurre chiamate al DB
 const cache = new Map<string, { data: any; timestamp: number }>();

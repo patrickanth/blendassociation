@@ -1,8 +1,7 @@
 import {
   signInWithEmailAndPassword,
   signOut,
-  onAuthStateChanged,
-  User as FirebaseUser
+  onAuthStateChanged
 } from 'firebase/auth';
 import { auth } from './firebase';
 

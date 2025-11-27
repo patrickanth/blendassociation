@@ -505,8 +505,8 @@ const GalleriaManager: React.FC<GalleriaManagerProps> = ({ onStatsUpdate }) => {
     try {
       setIsLoading(true);
       const [galleriaData, eventiData] = await Promise.all([
-        galleriaService.getGalleriaItems(),
-        eventiService.getEventi()
+        galleriaService.getGalleriaAdmin(),
+        eventiService.getEventiAdmin()
       ]);
       setGalleriaItems(galleriaData);
       setEventi(eventiData);
