@@ -260,14 +260,14 @@ const AdminDashboard: React.FC = () => {
       
       // Carica statistiche eventi
       const [tuttiEventi, eventiPubblicati] = await Promise.all([
-        eventiService.getEventi(),
-        eventiService.getEventi({ solo_pubblicati: true })
+        eventiService.getEventiAdmin(),
+        eventiService.getEventiPubblici()
       ]);
 
       // Carica statistiche galleria
       const [tuttaGalleria, galleriaPubblicata] = await Promise.all([
-        galleriaService.getGalleriaItems(),
-        galleriaService.getGalleriaItems({ solo_pubblicati: true })
+        galleriaService.getGalleriaAdmin(),
+        galleriaService.getGalleriaPubblica()
       ]);
 
       setStats({
@@ -303,7 +303,7 @@ const AdminDashboard: React.FC = () => {
         return (
           <>
             <WelcomeSection>
-              <WelcomeTitle>Benvenuto, {user?.displayName || 'Admin'}</WelcomeTitle>
+              <WelcomeTitle>Benvenuto, Admin</WelcomeTitle>
               <WelcomeSubtitle>Gestisci i contenuti di BLEND dal pannello di controllo</WelcomeSubtitle>
             </WelcomeSection>
 

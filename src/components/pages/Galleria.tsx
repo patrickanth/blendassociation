@@ -316,9 +316,9 @@ const Galleria: React.FC = () => {
   const loadGalleria = async () => {
     try {
       setIsLoading(true);
-      const galleriaData = await galleriaService.getGalleriaItems({ solo_pubblicati: true });
+      const galleriaData = await galleriaService.getGalleriaPubblica();
       // Ordina per data più recente
-      const sortedGalleria = galleriaData.sort((a, b) => b.data.getTime() - a.data.getTime());
+      const sortedGalleria = galleriaData.sort((a: GalleriaItem, b: GalleriaItem) => b.data.getTime() - a.data.getTime());
       setGalleriaItems(sortedGalleria);
     } catch (error) {
       console.error('Errore nel caricamento della galleria:', error);

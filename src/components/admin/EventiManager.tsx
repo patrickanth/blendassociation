@@ -527,7 +527,7 @@ const EventiManager: React.FC<EventiManagerProps> = ({ onStatsUpdate }) => {
   const loadEventi = async () => {
     try {
       setIsLoading(true);
-      const eventiData = await eventiService.getEventi();
+      const eventiData = await eventiService.getEventiAdmin();
       setEventi(eventiData);
       if (onStatsUpdate) onStatsUpdate();
     } catch (error) {
